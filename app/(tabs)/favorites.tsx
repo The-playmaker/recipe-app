@@ -1,65 +1,106 @@
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Heart, Clock, ChefHat, Trash2 } from 'lucide-react-native';
-import { useState } from 'react';
+import { supabase } from '../lib';
+
 
 const { width } = Dimensions.get('window');
 const isTablet = width >= 768;
 
-const initialFavorites = [
-  {
-    id: 1,
-    name: 'Classic Mojito',
-    category: 'Cocktail',
-    image: 'https://images.pexels.com/photos/1304540/pexels-photo-1304540.jpeg?auto=compress&cs=tinysrgb&w=800',
-    difficulty: 'Easy',
-    time: '5 min',
-    ingredients: ['White rum', 'Fresh mint', 'Lime juice', 'Sugar', 'Soda water'],
-    description: 'A refreshing Cuban cocktail with fresh mint and lime.'
-  },
-  {
-    id: 3,
-    name: 'Virgin Piña Colada',
-    category: 'Mocktail',
-    image: 'https://images.pexels.com/photos/1304540/pexels-photo-1304540.jpeg?auto=compress&cs=tinysrgb&w=800',
-    difficulty: 'Easy',
-    time: '4 min',
-    ingredients: ['Pineapple juice', 'Coconut cream', 'Ice', 'Pineapple wedge'],
-    description: 'A tropical non-alcoholic drink perfect for any time of day.'
-  },
-  {
-    id: 6,
-    name: 'Cucumber Mint Cooler',
-    category: 'Mocktail',
-    image: 'https://images.pexels.com/photos/1304540/pexels-photo-1304540.jpeg?auto=compress&cs=tinysrgb&w=800',
-    difficulty: 'Easy',
-    time: '3 min',
-    ingredients: ['Cucumber', 'Fresh mint', 'Lime juice', 'Honey', 'Sparkling water'],
-    description: 'A refreshing cucumber-based drink with fresh mint.'
-  }
-];
+type Recipe = {
+  id: string;
+  name: string;
+  category: string;
+  image_url: string;
+  difficulty: string;
+  time_minutes: number;
+  ingredients: string[];
+  description: string;
+  popularity: number;
+};
 
 export default function FavoritesScreen() {
-  const [favorites, setFavorites] = useState(initialFavorites);
+  const [favorites, setFavorites] = useState<Recipe[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const removeFavorite = (recipeId: number) => {
-    setFavorites(prevFavorites =>
-      prevFavorites.filter(recipe => recipe.id !== recipeId)
+  // Hent favoritter sortert på popularitet
+  const fetchFavorites = async () => {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from<Recipe>('recipes')
+      .select('*')
+      .order('popularity', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching favorites:', error);
+    } else {
+      setFavorites(data ?? []);
+    }
+    setLoading(false);
+  };
+
+  // Øk popularitet når en oppskrift brukes
+  const incrementPopularity = async (recipeId: string) => {
+    // Finn gjeldende popularitet
+    const { data, error } = await supabase
+      .from('recipes')
+      .select('popularity')
+      .eq('id', recipeId)
+      .single();
+
+    if (error) {
+      console.error('Error fetching popularity:', error);
+      return;
+    }
+
+    const newPopularity = (data?.popularity ?? 0) + 1;
+
+    const { error: updateError } = await supabase
+      .from('recipes')
+      .update({ popularity: newPopularity })
+      .eq('id', recipeId);
+
+    if (updateError) {
+      console.error('Error updating popularity:', updateError);
+      return;
+    }
+
+    // Oppdater lokalt state for å oppdatere UI uten ny hent
+    setFavorites((prev) =>
+      prev
+        .map((recipe) =>
+          recipe.id === recipeId ? { ...recipe, popularity: newPopularity } : recipe
+        )
+        // Sorter på nytt
+        .sort((a, b) => b.popularity - a.popularity)
     );
   };
+
+  useEffect(() => {
+    fetchFavorites();
+  }, []);
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <Text>Laster favoritter...</Text>
+      </SafeAreaView>
+    );
+  }
 
   if (favorites.length === 0) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
-          <Text style={styles.title}>Favorite Recipes</Text>
-          <Text style={styles.subtitle}>Your bookmarked drinks</Text>
+          <Text style={styles.title}>Favoritter</Text>
+          <Text style={styles.subtitle}>Ingen favoritter enda</Text>
         </View>
         <View style={styles.emptyState}>
           <Heart size={64} color="#E5E7EB" />
-          <Text style={styles.emptyTitle}>No favorites yet</Text>
+          <Text style={styles.emptyTitle}>Ingen favoritter enda</Text>
           <Text style={styles.emptySubtitle}>
-            Add recipes to your favorites by tapping the heart icon
+            Legg til favoritter ved å bruke hjerteikonet på en oppskrift
           </Text>
         </View>
       </SafeAreaView>
@@ -68,17 +109,19 @@ export default function FavoritesScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.title}>Favorite Recipes</Text>
-        <Text style={styles.subtitle}>{favorites.length} saved recipes</Text>
+        <Text style={styles.title}>Favoritter</Text>
+        <Text style={styles.subtitle}>{favorites.length} oppskrifter</Text>
       </View>
 
-      {/* Favorites List */}
       <ScrollView style={styles.favoritesContainer} showsVerticalScrollIndicator={false}>
         {favorites.map((recipe) => (
-          <TouchableOpacity key={recipe.id} style={styles.favoriteCard}>
-            <Image source={{ uri: recipe.image }} style={styles.favoriteImage} />
+          <TouchableOpacity
+            key={recipe.id}
+            style={styles.favoriteCard}
+            onPress={() => incrementPopularity(recipe.id)}
+          >
+            <Image source={{ uri: recipe.image_url }} style={styles.favoriteImage} />
             <View style={styles.favoriteContent}>
               <View style={styles.favoriteInfo}>
                 <Text style={styles.favoriteName}>{recipe.name}</Text>
@@ -87,7 +130,7 @@ export default function FavoritesScreen() {
                 <View style={styles.favoriteMeta}>
                   <View style={styles.favoriteMetaItem}>
                     <Clock size={16} color="#6B7280" />
-                    <Text style={styles.favoriteMetaText}>{recipe.time}</Text>
+                    <Text style={styles.favoriteMetaText}>{recipe.time_minutes} min</Text>
                   </View>
                   <View style={styles.favoriteMetaItem}>
                     <ChefHat size={16} color="#6B7280" />
@@ -97,13 +140,9 @@ export default function FavoritesScreen() {
                 <Text style={styles.ingredientsPreview}>
                   {recipe.ingredients.join(', ')}
                 </Text>
+                <Text style={{fontSize: 10, color: '#AAA'}}>Popularity: {recipe.popularity}</Text>
               </View>
-              <TouchableOpacity
-                style={styles.removeButton}
-                onPress={() => removeFavorite(recipe.id)}
-              >
-                <Trash2 size={20} color="#DC2626" />
-              </TouchableOpacity>
+              {/* Her kan du ha f.eks. remove-funksjon hvis ønskelig */}
             </View>
           </TouchableOpacity>
         ))}
@@ -114,14 +153,8 @@ export default function FavoritesScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F9FAFB',
-  },
-  header: {
-    padding: 24,
-    paddingTop: 16,
-  },
+  container: { flex: 1, backgroundColor: '#F9FAFB' },
+  header: { padding: 24, paddingTop: 16 },
   title: {
     fontSize: isTablet ? 32 : 28,
     fontFamily: 'Inter-Bold',
@@ -222,11 +255,6 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter-Regular',
     color: '#9CA3AF',
     lineHeight: 16,
-  },
-  removeButton: {
-    padding: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   bottomSpacing: {
     height: 100,

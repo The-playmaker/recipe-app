@@ -1,32 +1,103 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, TextInput, Dimensions, Alert } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Image,
+  TextInput,
+  Dimensions,
+  Alert,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Search, Filter, Clock, ChefHat, Heart, CreditCard as Edit, Trash2 } from 'lucide-react-native';
-import { useState } from 'react';
-import { useRecipes } from '@/hooks/useRecipes';
+import {
+  Search,
+  Filter,
+  Clock,
+  ChefHat,
+  Heart,
+  CreditCard as Edit,
+  Trash2,
+} from 'lucide-react-native';
 import { router } from 'expo-router';
+import supabase from '@/lib/supabase'; // Importer din supabase klient korrekt
 
 const { width } = Dimensions.get('window');
 const isTablet = width >= 768;
 
-const categories = ['All', 'Cocktail', 'Mocktail', 'Coffee', 'Coffee Cocktail', 'Beer', 'Wine', 'Spirits', 'Hot Drinks'];
+const categories = [
+  'All',
+  'Cocktail',
+  'Mocktail',
+  'Coffee',
+  'Coffee Cocktail',
+  'Beer',
+  'Wine',
+  'Spirits',
+  'Hot Drinks',
+];
 
 export default function RecipesScreen() {
-  const { recipes, loading, error, deleteRecipe } = useRecipes();
+  const [recipes, setRecipes] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
 
-  const filteredRecipes = recipes.filter(recipe => {
-    const matchesSearch = recipe.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         recipe.ingredients.some(ingredient => 
-                           ingredient.toLowerCase().includes(searchQuery.toLowerCase())
-                         );
+  // Hent oppskrifter fra Supabase
+  const fetchRecipes = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const { data, error } = await supabase
+        .from('recipes')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      setRecipes(data || []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch recipes');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchRecipes();
+  }, []);
+
+  const deleteRecipe = async (recipeId: string) => {
+    try {
+      setLoading(true);
+      const { error } = await supabase.from('recipes').delete().eq('id', recipeId);
+
+      if (error) throw error;
+
+      // Oppdater liste etter sletting
+      setRecipes((prev) => prev.filter((r) => r.id !== recipeId));
+    } catch (err) {
+      Alert.alert('Error', 'Failed to delete recipe. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filteredRecipes = recipes.filter((recipe) => {
+    const matchesSearch =
+      recipe.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      recipe.ingredients.some((ingredient: string) =>
+        ingredient.toLowerCase().includes(searchQuery.toLowerCase()),
+      );
     const matchesCategory = selectedCategory === 'All' || recipe.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
 
   const toggleFavorite = (recipeId: string) => {
-    setFavorites(prev => {
+    setFavorites((prev) => {
       const newFavorites = new Set(prev);
       if (newFavorites.has(recipeId)) {
         newFavorites.delete(recipeId);
@@ -46,15 +117,9 @@ export default function RecipesScreen() {
         {
           text: 'Delete',
           style: 'destructive',
-          onPress: async () => {
-            try {
-              await deleteRecipe(recipeId);
-            } catch (error) {
-              Alert.alert('Error', 'Failed to delete recipe. Please try again.');
-            }
-          }
-        }
-      ]
+          onPress: () => deleteRecipe(recipeId),
+        },
+      ],
     );
   };
 
@@ -109,16 +174,10 @@ export default function RecipesScreen() {
         {categories.map((category) => (
           <TouchableOpacity
             key={category}
-            style={[
-              styles.categoryChip,
-              selectedCategory === category && styles.categoryChipActive
-            ]}
+            style={[styles.categoryChip, selectedCategory === category && styles.categoryChipActive]}
             onPress={() => setSelectedCategory(category)}
           >
-            <Text style={[
-              styles.categoryChipText,
-              selectedCategory === category && styles.categoryChipTextActive
-            ]}>
+            <Text style={[styles.categoryChipText, selectedCategory === category && styles.categoryChipTextActive]}>
               {category}
             </Text>
           </TouchableOpacity>
@@ -132,10 +191,7 @@ export default function RecipesScreen() {
             <TouchableOpacity key={recipe.id} style={styles.recipeCard}>
               <View style={styles.recipeImageContainer}>
                 <Image source={{ uri: recipe.image_url }} style={styles.recipeImage} />
-                <TouchableOpacity
-                  style={styles.favoriteButton}
-                  onPress={() => toggleFavorite(recipe.id)}
-                >
+                <TouchableOpacity style={styles.favoriteButton} onPress={() => toggleFavorite(recipe.id)}>
                   <Heart
                     size={18}
                     color={favorites.has(recipe.id) ? '#DC2626' : '#6B7280'}
@@ -143,10 +199,7 @@ export default function RecipesScreen() {
                   />
                 </TouchableOpacity>
                 <View style={styles.actionButtons}>
-                  <TouchableOpacity
-                    style={styles.actionButton}
-                    onPress={() => router.push(`/edit-recipe/${recipe.id}`)}
-                  >
+                  <TouchableOpacity style={styles.actionButton} onPress={() => router.push(`/edit-recipe/${recipe.id}`)}>
                     <Edit size={16} color="#F59E0B" />
                   </TouchableOpacity>
                   <TouchableOpacity
@@ -173,20 +226,16 @@ export default function RecipesScreen() {
                     <Text style={styles.recipeMetaText}>{recipe.difficulty}</Text>
                   </View>
                 </View>
-                <Text style={styles.ingredientsCount}>
-                  {recipe.ingredients.length} ingredients
-                </Text>
+                <Text style={styles.ingredientsCount}>{recipe.ingredients.length} ingredients</Text>
               </View>
             </TouchableOpacity>
           ))}
         </View>
-        
+
         {filteredRecipes.length === 0 && (
           <View style={styles.emptyState}>
             <Text style={styles.emptyStateText}>No recipes found</Text>
-            <Text style={styles.emptyStateSubtext}>
-              Try adjusting your search or category filter
-            </Text>
+            <Text style={styles.emptyStateSubtext}>Try adjusting your search or category filter</Text>
           </View>
         )}
       </ScrollView>
@@ -290,12 +339,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     marginRight: 12,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 1,
   },
   categoryChipActive: {
     backgroundColor: '#F59E0B',
-    borderColor: '#F59E0B',
   },
   categoryChipText: {
     fontSize: isTablet ? 14 : 12,
@@ -306,92 +357,83 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   recipesContainer: {
-    flex: 1,
     paddingHorizontal: 24,
   },
   recipesGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 16,
-    paddingBottom: 100,
+    justifyContent: 'space-between',
   },
   recipeCard: {
+    width: isTablet ? (width - 96) / 3 : (width - 72) / 2,
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
-    width: isTablet ? (width - 72) / 3 : (width - 64) / 2,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowRadius: 3,
+    elevation: 2,
+    marginBottom: 24,
   },
   recipeImageContainer: {
     position: 'relative',
+    height: isTablet ? 200 : 140,
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    overflow: 'hidden',
   },
   recipeImage: {
     width: '100%',
-    height: isTablet ? 160 : 140,
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
+    height: '100%',
   },
   favoriteButton: {
     position: 'absolute',
     top: 12,
     right: 12,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#FFFFFFCC',
     borderRadius: 20,
-    padding: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    padding: 6,
   },
   actionButtons: {
     position: 'absolute',
     bottom: 12,
     right: 12,
     flexDirection: 'row',
-    gap: 8,
+    gap: 12,
   },
   actionButton: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#FFFFFFCC',
     borderRadius: 16,
     padding: 6,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
   },
   deleteButton: {
-    backgroundColor: '#FEE2E2',
+    backgroundColor: '#FFF0F0',
   },
   recipeContent: {
     padding: 16,
   },
   recipeName: {
-    fontSize: isTablet ? 16 : 14,
+    fontSize: isTablet ? 18 : 16,
     fontFamily: 'Inter-SemiBold',
     color: '#111827',
     marginBottom: 4,
   },
   recipeCategory: {
-    fontSize: isTablet ? 12 : 11,
+    fontSize: isTablet ? 14 : 12,
     fontFamily: 'Inter-Medium',
     color: '#F59E0B',
     marginBottom: 8,
   },
   recipeDescription: {
-    fontSize: isTablet ? 12 : 10,
+    fontSize: isTablet ? 14 : 12,
     fontFamily: 'Inter-Regular',
     color: '#6B7280',
-    marginBottom: 8,
-    lineHeight: 16,
+    marginBottom: 12,
   },
   recipeMeta: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    gap: 16,
     marginBottom: 8,
   },
   recipeMetaItem: {
@@ -406,24 +448,22 @@ const styles = StyleSheet.create({
   },
   ingredientsCount: {
     fontSize: isTablet ? 12 : 10,
-    fontFamily: 'Inter-Regular',
+    fontFamily: 'Inter-Medium',
     color: '#6B7280',
   },
   emptyState: {
+    marginTop: 32,
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 48,
   },
   emptyStateText: {
     fontSize: isTablet ? 18 : 16,
     fontFamily: 'Inter-SemiBold',
     color: '#6B7280',
-    marginBottom: 8,
+    marginBottom: 4,
   },
   emptyStateSubtext: {
     fontSize: isTablet ? 14 : 12,
     fontFamily: 'Inter-Regular',
     color: '#9CA3AF',
-    textAlign: 'center',
   },
 });
