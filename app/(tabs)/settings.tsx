@@ -1,70 +1,70 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, Dimensions, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Settings, Bell, Palette, Download, Info, CircleHelp as HelpCircle, ChevronRight } from 'lucide-react-native';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRecipes } from '@/hooks/useRecipes'; // Importerer hooken vår
+import firestore from '@react-native-firebase/firestore'; // Importerer for å telle kategorier
 
 const { width } = Dimensions.get('window');
 const isTablet = width >= 768;
 
 export default function SettingsScreen() {
+  // State for toggles
   const [notifications, setNotifications] = useState(true);
   const [darkMode, setDarkMode] = useState(false);
   const [autoSync, setAutoSync] = useState(true);
+  
+  // Henter data med hooken vår
+  const { recipes, loading: recipesLoading } = useRecipes();
+  
+  // Egen state for antall kategorier
+  const [categoriesCount, setCategoriesCount] = useState(0);
+  const [loadingCategories, setLoadingCategories] = useState(true);
 
+  // Henter antall kategorier når komponenten vises
+  useEffect(() => {
+    const fetchCategoriesCount = async () => {
+      try {
+        const categoriesSnapshot = await firestore().collection('categories').get();
+        setCategoriesCount(categoriesSnapshot.size);
+      } catch (error) {
+        console.error("Failed to fetch category count:", error);
+        setCategoriesCount(0); // Sett til 0 ved feil
+      } finally {
+        setLoadingCategories(false);
+      }
+    };
+    fetchCategoriesCount();
+  }, []);
+
+  // Kombinert laste-status
+  const isLoading = recipesLoading || loadingCategories;
+
+  // Dynamisk generert statistikk
+  const appStats = [
+    { label: 'Total Recipes', value: recipes.length.toString() },
+    { label: 'Favorites', value: '12' }, // Merk: Favoritter er ikke globalt sporet ennå
+    { label: 'Categories', value: categoriesCount.toString() },
+    { label: 'Last Updated', value: 'Today' } // Merk: "Last updated" kan gjøres mer avansert senere
+  ];
+
+  // Data for innstillingslisten (samme som før)
   const settingsData = [
     {
       section: 'App Preferences',
       items: [
-        {
-          icon: Bell,
-          title: 'Notifications',
-          subtitle: 'Get alerts for new recipes',
-          type: 'toggle',
-          value: notifications,
-          onToggle: setNotifications
-        },
-        {
-          icon: Palette,
-          title: 'Dark Mode',
-          subtitle: 'Switch to dark theme',
-          type: 'toggle',
-          value: darkMode,
-          onToggle: setDarkMode
-        },
-        {
-          icon: Download,
-          title: 'Auto Sync',
-          subtitle: 'Automatically sync recipes',
-          type: 'toggle',
-          value: autoSync,
-          onToggle: setAutoSync
-        }
+        { icon: Bell, title: 'Notifications', subtitle: 'Get alerts for new recipes', type: 'toggle', value: notifications, onToggle: setNotifications },
+        { icon: Palette, title: 'Dark Mode', subtitle: 'Switch to dark theme', type: 'toggle', value: darkMode, onToggle: setDarkMode },
+        { icon: Download, title: 'Auto Sync', subtitle: 'Automatically sync recipes', type: 'toggle', value: autoSync, onToggle: setAutoSync }
       ]
     },
     {
       section: 'Support',
       items: [
-        {
-          icon: HelpCircle,
-          title: 'Help & Support',
-          subtitle: 'Get help with the app',
-          type: 'navigation'
-        },
-        {
-          icon: Info,
-          title: 'About',
-          subtitle: 'App version and info',
-          type: 'navigation'
-        }
+        { icon: HelpCircle, title: 'Help & Support', subtitle: 'Get help with the app', type: 'navigation' },
+        { icon: Info, title: 'About', subtitle: 'App version and info', type: 'navigation' }
       ]
     }
-  ];
-
-  const appStats = [
-    { label: 'Total Recipes', value: '67' },
-    { label: 'Favorites', value: '12' },
-    { label: 'Categories', value: '8' },
-    { label: 'Last Updated', value: 'Today' }
   ];
 
   return (
@@ -79,14 +79,18 @@ export default function SettingsScreen() {
         {/* App Stats */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>App Statistics</Text>
-          <View style={styles.statsGrid}>
-            {appStats.map((stat, index) => (
-              <View key={index} style={styles.statCard}>
-                <Text style={styles.statValue}>{stat.value}</Text>
-                <Text style={styles.statLabel}>{stat.label}</Text>
-              </View>
-            ))}
-          </View>
+          {isLoading ? (
+            <ActivityIndicator size="small" color="#F59E0B" />
+          ) : (
+            <View style={styles.statsGrid}>
+              {appStats.map((stat, index) => (
+                <View key={index} style={styles.statCard}>
+                  <Text style={styles.statValue}>{stat.value}</Text>
+                  <Text style={styles.statLabel}>{stat.label}</Text>
+                </View>
+              ))}
+            </View>
+          )}
         </View>
 
         {/* Settings Sections */}
@@ -159,13 +163,14 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: isTablet ? 32 : 28,
-    fontFamily: 'Inter-Bold',
+    // fontFamily: 'Inter-Bold',
+    fontWeight: 'bold',
     color: '#111827',
     marginBottom: 8,
   },
   subtitle: {
     fontSize: isTablet ? 18 : 16,
-    fontFamily: 'Inter-Regular',
+    // fontFamily: 'Inter-Regular',
     color: '#6B7280',
   },
   content: {
@@ -177,7 +182,8 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: isTablet ? 20 : 18,
-    fontFamily: 'Inter-SemiBold',
+    // fontFamily: 'Inter-SemiBold',
+    fontWeight: '600',
     color: '#111827',
     marginBottom: 16,
   },
@@ -201,13 +207,14 @@ const styles = StyleSheet.create({
   },
   statValue: {
     fontSize: isTablet ? 24 : 20,
-    fontFamily: 'Inter-Bold',
+    // fontFamily: 'Inter-Bold',
+    fontWeight: 'bold',
     color: '#F59E0B',
     marginBottom: 4,
   },
   statLabel: {
     fontSize: isTablet ? 12 : 11,
-    fontFamily: 'Inter-Regular',
+    // fontFamily: 'Inter-Regular',
     color: '#6B7280',
     textAlign: 'center',
   },
@@ -244,13 +251,14 @@ const styles = StyleSheet.create({
   },
   settingTitle: {
     fontSize: isTablet ? 16 : 14,
-    fontFamily: 'Inter-SemiBold',
+    // fontFamily: 'Inter-SemiBold',
+    fontWeight: '600',
     color: '#111827',
     marginBottom: 2,
   },
   settingSubtitle: {
     fontSize: isTablet ? 14 : 12,
-    fontFamily: 'Inter-Regular',
+    // fontFamily: 'Inter-Regular',
     color: '#6B7280',
   },
   settingControl: {
@@ -269,19 +277,20 @@ const styles = StyleSheet.create({
   },
   appName: {
     fontSize: isTablet ? 24 : 20,
-    fontFamily: 'Inter-Bold',
+    // fontFamily: 'Inter-Bold',
+    fontWeight: 'bold',
     color: '#111827',
     marginBottom: 4,
   },
   appVersion: {
     fontSize: isTablet ? 14 : 12,
-    fontFamily: 'Inter-Regular',
+    // fontFamily: 'Inter-Regular',
     color: '#6B7280',
     marginBottom: 16,
   },
   appDescription: {
     fontSize: isTablet ? 14 : 12,
-    fontFamily: 'Inter-Regular',
+    // fontFamily: 'Inter-Regular',
     color: '#6B7280',
     textAlign: 'center',
     lineHeight: 20,

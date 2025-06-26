@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "343885415965",
+    "project_id": "drink-app-ba155",
+    "storage_bucket": "drink-app-ba155.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:343885415965:android:617bd223bbe8628d95e8f4",
+        "android_client_info": {
+          "package_name": "com.anonymous.boltexponativewind"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCjPCA3w4u3uy0EiZ3YOBvKKvdN0s7_18M"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
