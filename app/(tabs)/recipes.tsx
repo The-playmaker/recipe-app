@@ -21,7 +21,7 @@ import {
   Trash2,
 } from 'lucide-react-native';
 import { router } from 'expo-router';
-import supabase from '@/lib/supabase'; // Importer din supabase klient korrekt
+import { supabase } from '../lib/supabase';
 
 const { width } = Dimensions.get('window');
 const isTablet = width >= 768;

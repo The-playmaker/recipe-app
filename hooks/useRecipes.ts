@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import { supabase, Recipe } from '@/lib/supabase';
+import { supabase, Recipe, Category } from '@/lib/supabase';
 
 export function useRecipes() {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -18,8 +19,20 @@ export function useRecipes() {
       setRecipes(data || []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch recipes');
-    } finally {
-      setLoading(false);
+    }
+  };
+
+  const fetchCategories = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('categories')
+        .select('*')
+        .order('name', { ascending: true });
+
+      if (error) throw error;
+      setCategories(data || []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch categories');
     }
   };
 
@@ -75,15 +88,20 @@ export function useRecipes() {
 
   useEffect(() => {
     fetchRecipes();
+    fetchCategories();
   }, []);
 
   return {
     recipes,
+    categories,
     loading,
     error,
-    refetch: fetchRecipes,
+    refetch: () => {
+      fetchRecipes();
+      fetchCategories();
+    },
     addRecipe,
     updateRecipe,
-    deleteRecipe
+    deleteRecipe,
   };
 }

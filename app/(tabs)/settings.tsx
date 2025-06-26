@@ -1,9 +1,56 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, Dimensions, Platform } from 'react-native';
+import { useRouter } from 'expo-router';
+import React, { useState, Dispatch, SetStateAction } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-// Bruk Lucide React for web, Lucide React Native for native
-// For enkelhet: vi bruker bare tekstikon her, bytt ut med egne ikoner når du får det til
+import { useFonts } from 'expo-font';
+import {
+  Inter_400Regular,
+  Inter_500Medium,
+  Inter_600SemiBold,
+  Inter_700Bold,
+} from '@expo-google-fonts/inter';
+import { View, Text } from 'react-native';
+
+export default function SettingsScreen() {
+  const [fontsLoaded, fontError] = useFonts({
+    'Inter-Regular': Inter_400Regular,
+    'Inter-Medium': Inter_500Medium,
+    'Inter-SemiBold': Inter_600SemiBold,
+    'Inter-Bold': Inter_700Bold,
+  });
+
+  if (!fontsLoaded && !fontError) {
+    return <View><Text>Loading fonts...</Text></View>;
+  }
+
+  if (fontError) {
+    console.error('Font loading error:', fontError);
+    return <View><Text>Error loading fonts</Text></View>;
+  }
+
+  return (
+    // ... resten av SettingsScreen-koden
+  );
+}
+interface ToggleSetting {
+  iconName: string;
+  title: string;
+  subtitle: string;
+  type: 'toggle';
+  value: boolean;
+  onToggle: Dispatch<SetStateAction<boolean>>;
+}
+
+interface NavigationSetting {
+  iconName: string;
+  title: string;
+  subtitle: string;
+  type: 'navigation';
+}
+
+type Setting = ToggleSetting | NavigationSetting;
+
 const IconPlaceholder = ({ name }: { name: string }) => (
   <View style={styles.settingIcon}>
     <Text>{name}</Text>
@@ -13,12 +60,55 @@ const IconPlaceholder = ({ name }: { name: string }) => (
 const { width } = Dimensions.get('window');
 const isTablet = width >= 768;
 
+const ToggleSettingItem = ({ item, index, isLast }: { item: ToggleSetting; index: number; isLast: boolean }) => (
+  <TouchableOpacity style={[styles.settingItem, isLast && styles.settingItemLast]}>
+    <IconPlaceholder name={item.iconName} />
+    <View style={styles.settingContent}>
+      <Text style={styles.settingTitle}>{item.title}</Text>
+      <Text style={styles.settingSubtitle}>{item.subtitle}</Text>
+    </View>
+    <View style={styles.settingControl}>
+      <Switch
+        value={item.value}
+        onValueChange={item.onToggle}
+        trackColor={{ false: '#E5E7EB', true: '#F59E0B' }}
+        thumbColor="#FFFFFF"
+      />
+    </View>
+  </TouchableOpacity>
+);
+
+const NavigationSettingItem = ({ item, index, isLast }: { item: NavigationSetting; index: number; isLast: boolean }) => {
+  const router = useRouter();
+  return (
+    <TouchableOpacity
+      style={[styles.settingItem, isLast && styles.settingItemLast]}
+      onPress={() => {
+        if (item.title === 'Help & Support') {
+          router.push('/help');
+        } else if (item.title === 'About') {
+          router.push('/about');
+        }
+      }}
+    >
+      <IconPlaceholder name={item.iconName} />
+      <View style={styles.settingContent}>
+        <Text style={styles.settingTitle}>{item.title}</Text>
+        <Text style={styles.settingSubtitle}>{item.subtitle}</Text>
+      </View>
+      <View style={styles.settingControl}>
+        <Text style={{ color: '#9CA3AF' }}>›</Text>
+      </View>
+    </TouchableOpacity>
+  );
+};
+
 export default function SettingsScreen() {
   const [notifications, setNotifications] = useState(true);
   const [darkMode, setDarkMode] = useState(false);
   const [autoSync, setAutoSync] = useState(true);
 
-  const settingsData = [
+  const settingsData: { section: string; items: Setting[] }[] = [
     {
       section: 'App Preferences',
       items: [
@@ -31,7 +121,7 @@ export default function SettingsScreen() {
           onToggle: setNotifications,
         },
         {
-          iconName: 'Palette',
+          iconName: ' Palette',
           title: 'Dark Mode',
           subtitle: 'Switch to dark theme',
           type: 'toggle',
@@ -99,27 +189,21 @@ export default function SettingsScreen() {
             <Text style={styles.sectionTitle}>{section.section}</Text>
             <View style={styles.settingsGroup}>
               {section.items.map((item, itemIndex) => (
-                <TouchableOpacity
-                  key={itemIndex}
-                  style={[styles.settingItem, itemIndex === section.items.length - 1 && styles.settingItemLast]}
-                >
-                  <IconPlaceholder name={item.iconName} />
-                  <View style={styles.settingContent}>
-                    <Text style={styles.settingTitle}>{item.title}</Text>
-                    <Text style={styles.settingSubtitle}>{item.subtitle}</Text>
-                  </View>
-                  <View style={styles.settingControl}>
-                    {item.type === 'toggle' && (
-                      <Switch
-                        value={item.value}
-                        onValueChange={item.onToggle}
-                        trackColor={{ false: '#E5E7EB', true: '#F59E0B' }}
-                        thumbColor="#FFFFFF"
-                      />
-                    )}
-                    {item.type === 'navigation' && <Text style={{ color: '#9CA3AF' }}>›</Text>}
-                  </View>
-                </TouchableOpacity>
+                item.type === 'toggle' ? (
+                  <ToggleSettingItem
+                    key={itemIndex}
+                    item={item as ToggleSetting}
+                    index={itemIndex}
+                    isLast={itemIndex === section.items.length - 1}
+                  />
+                ) : (
+                  <NavigationSettingItem
+                    key={itemIndex}
+                    item={item as NavigationSetting}
+                    index={itemIndex}
+                    isLast={itemIndex === section.items.length - 1}
+                  />
+                )
               ))}
             </View>
           </View>
@@ -141,6 +225,7 @@ export default function SettingsScreen() {
   );
 }
 
+// Stil-definisjoner (uendret fra din kode)
 const styles = StyleSheet.create({
   container: {
     flex: 1,
