@@ -23,7 +23,7 @@ export type Recipe = {
 export type Category = {
   id: string;
   name: string;
-  icon: string; // f.eks. 'Wine', 'Coffee', 'Sparkles', 'TrendingUp'
+  icon: string;
   color: string;
   created_at: string;
 };

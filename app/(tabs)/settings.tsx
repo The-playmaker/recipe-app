@@ -1,177 +1,82 @@
-import { useRouter } from 'expo-router';
-import React, { useState, Dispatch, SetStateAction } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
-import { useFonts } from 'expo-font';
-import {
-  Inter_400Regular,
-  Inter_500Medium,
-  Inter_600SemiBold,
-  Inter_700Bold,
-} from '@expo-google-fonts/inter';
-import { View, Text } from 'react-native';
-
-export default function SettingsScreen() {
-  const [fontsLoaded, fontError] = useFonts({
-    'Inter-Regular': Inter_400Regular,
-    'Inter-Medium': Inter_500Medium,
-    'Inter-SemiBold': Inter_600SemiBold,
-    'Inter-Bold': Inter_700Bold,
-  });
-
-  if (!fontsLoaded && !fontError) {
-    return <View><Text>Loading fonts...</Text></View>;
-  }
-
-  if (fontError) {
-    console.error('Font loading error:', fontError);
-    return <View><Text>Error loading fonts</Text></View>;
-  }
-
-  return (
-    // ... resten av SettingsScreen-koden
-  );
-}
-interface ToggleSetting {
-  iconName: string;
-  title: string;
-  subtitle: string;
-  type: 'toggle';
-  value: boolean;
-  onToggle: Dispatch<SetStateAction<boolean>>;
-}
-
-interface NavigationSetting {
-  iconName: string;
-  title: string;
-  subtitle: string;
-  type: 'navigation';
-}
-
-type Setting = ToggleSetting | NavigationSetting;
-
-const IconPlaceholder = ({ name }: { name: string }) => (
-  <View style={styles.settingIcon}>
-    <Text>{name}</Text>
-  </View>
-);
+import { Settings, Bell, Palette, Download, Info, CircleHelp as HelpCircle, ChevronRight } from 'lucide-react-native';
+import { useState } from 'react';
 
 const { width } = Dimensions.get('window');
 const isTablet = width >= 768;
-
-const ToggleSettingItem = ({ item, index, isLast }: { item: ToggleSetting; index: number; isLast: boolean }) => (
-  <TouchableOpacity style={[styles.settingItem, isLast && styles.settingItemLast]}>
-    <IconPlaceholder name={item.iconName} />
-    <View style={styles.settingContent}>
-      <Text style={styles.settingTitle}>{item.title}</Text>
-      <Text style={styles.settingSubtitle}>{item.subtitle}</Text>
-    </View>
-    <View style={styles.settingControl}>
-      <Switch
-        value={item.value}
-        onValueChange={item.onToggle}
-        trackColor={{ false: '#E5E7EB', true: '#F59E0B' }}
-        thumbColor="#FFFFFF"
-      />
-    </View>
-  </TouchableOpacity>
-);
-
-const NavigationSettingItem = ({ item, index, isLast }: { item: NavigationSetting; index: number; isLast: boolean }) => {
-  const router = useRouter();
-  return (
-    <TouchableOpacity
-      style={[styles.settingItem, isLast && styles.settingItemLast]}
-      onPress={() => {
-        if (item.title === 'Help & Support') {
-          router.push('/help');
-        } else if (item.title === 'About') {
-          router.push('/about');
-        }
-      }}
-    >
-      <IconPlaceholder name={item.iconName} />
-      <View style={styles.settingContent}>
-        <Text style={styles.settingTitle}>{item.title}</Text>
-        <Text style={styles.settingSubtitle}>{item.subtitle}</Text>
-      </View>
-      <View style={styles.settingControl}>
-        <Text style={{ color: '#9CA3AF' }}>›</Text>
-      </View>
-    </TouchableOpacity>
-  );
-};
 
 export default function SettingsScreen() {
   const [notifications, setNotifications] = useState(true);
   const [darkMode, setDarkMode] = useState(false);
   const [autoSync, setAutoSync] = useState(true);
 
-  const settingsData: { section: string; items: Setting[] }[] = [
+  const settingsData = [
     {
       section: 'App Preferences',
       items: [
         {
-          iconName: 'Bell',
+          icon: Bell,
           title: 'Notifications',
           subtitle: 'Get alerts for new recipes',
           type: 'toggle',
           value: notifications,
-          onToggle: setNotifications,
+          onToggle: setNotifications
         },
         {
-          iconName: ' Palette',
+          icon: Palette,
           title: 'Dark Mode',
           subtitle: 'Switch to dark theme',
           type: 'toggle',
           value: darkMode,
-          onToggle: setDarkMode,
+          onToggle: setDarkMode
         },
         {
-          iconName: 'Download',
+          icon: Download,
           title: 'Auto Sync',
           subtitle: 'Automatically sync recipes',
           type: 'toggle',
           value: autoSync,
-          onToggle: setAutoSync,
-        },
-      ],
+          onToggle: setAutoSync
+        }
+      ]
     },
     {
       section: 'Support',
       items: [
         {
-          iconName: 'HelpCircle',
+          icon: HelpCircle,
           title: 'Help & Support',
           subtitle: 'Get help with the app',
-          type: 'navigation',
+          type: 'navigation'
         },
         {
-          iconName: 'Info',
+          icon: Info,
           title: 'About',
           subtitle: 'App version and info',
-          type: 'navigation',
-        },
-      ],
-    },
+          type: 'navigation'
+        }
+      ]
+    }
   ];
 
   const appStats = [
     { label: 'Total Recipes', value: '67' },
     { label: 'Favorites', value: '12' },
     { label: 'Categories', value: '8' },
-    { label: 'Last Updated', value: 'Today' },
+    { label: 'Last Updated', value: 'Today' }
   ];
 
   return (
     <SafeAreaView style={styles.container}>
+      {/* Header */}
       <View style={styles.header}>
         <Text style={styles.title}>Settings</Text>
         <Text style={styles.subtitle}>Customize your experience</Text>
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        {/* App Stats */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>App Statistics</Text>
           <View style={styles.statsGrid}>
@@ -184,31 +89,49 @@ export default function SettingsScreen() {
           </View>
         </View>
 
+        {/* Settings Sections */}
         {settingsData.map((section, sectionIndex) => (
           <View key={sectionIndex} style={styles.section}>
             <Text style={styles.sectionTitle}>{section.section}</Text>
             <View style={styles.settingsGroup}>
-              {section.items.map((item, itemIndex) => (
-                item.type === 'toggle' ? (
-                  <ToggleSettingItem
+              {section.items.map((item, itemIndex) => {
+                const IconComponent = item.icon;
+                return (
+                  <TouchableOpacity
                     key={itemIndex}
-                    item={item as ToggleSetting}
-                    index={itemIndex}
-                    isLast={itemIndex === section.items.length - 1}
-                  />
-                ) : (
-                  <NavigationSettingItem
-                    key={itemIndex}
-                    item={item as NavigationSetting}
-                    index={itemIndex}
-                    isLast={itemIndex === section.items.length - 1}
-                  />
-                )
-              ))}
+                    style={[
+                      styles.settingItem,
+                      itemIndex === section.items.length - 1 && styles.settingItemLast
+                    ]}
+                  >
+                    <View style={styles.settingIcon}>
+                      <IconComponent size={20} color="#6B7280" />
+                    </View>
+                    <View style={styles.settingContent}>
+                      <Text style={styles.settingTitle}>{item.title}</Text>
+                      <Text style={styles.settingSubtitle}>{item.subtitle}</Text>
+                    </View>
+                    <View style={styles.settingControl}>
+                      {item.type === 'toggle' && (
+                        <Switch
+                          value={item.value}
+                          onValueChange={item.onToggle}
+                          trackColor={{ false: '#E5E7EB', true: '#F59E0B' }}
+                          thumbColor="#FFFFFF"
+                        />
+                      )}
+                      {item.type === 'navigation' && (
+                        <ChevronRight size={20} color="#9CA3AF" />
+                      )}
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
             </View>
           </View>
         ))}
 
+        {/* App Info */}
         <View style={styles.section}>
           <View style={styles.appInfo}>
             <Text style={styles.appName}>Drinks & Recipes</Text>
@@ -225,7 +148,6 @@ export default function SettingsScreen() {
   );
 }
 
-// Stil-definisjoner (uendret fra din kode)
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -237,12 +159,13 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: isTablet ? 32 : 28,
-    fontWeight: '700',
+    fontFamily: 'Inter-Bold',
     color: '#111827',
     marginBottom: 8,
   },
   subtitle: {
     fontSize: isTablet ? 18 : 16,
+    fontFamily: 'Inter-Regular',
     color: '#6B7280',
   },
   content: {
@@ -254,7 +177,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: isTablet ? 20 : 18,
-    fontWeight: '600',
+    fontFamily: 'Inter-SemiBold',
     color: '#111827',
     marginBottom: 16,
   },
@@ -278,12 +201,13 @@ const styles = StyleSheet.create({
   },
   statValue: {
     fontSize: isTablet ? 24 : 20,
-    fontWeight: '700',
+    fontFamily: 'Inter-Bold',
     color: '#F59E0B',
     marginBottom: 4,
   },
   statLabel: {
     fontSize: isTablet ? 12 : 11,
+    fontFamily: 'Inter-Regular',
     color: '#6B7280',
     textAlign: 'center',
   },
@@ -320,12 +244,13 @@ const styles = StyleSheet.create({
   },
   settingTitle: {
     fontSize: isTablet ? 16 : 14,
-    fontWeight: '600',
+    fontFamily: 'Inter-SemiBold',
     color: '#111827',
     marginBottom: 2,
   },
   settingSubtitle: {
     fontSize: isTablet ? 14 : 12,
+    fontFamily: 'Inter-Regular',
     color: '#6B7280',
   },
   settingControl: {
@@ -344,17 +269,19 @@ const styles = StyleSheet.create({
   },
   appName: {
     fontSize: isTablet ? 24 : 20,
-    fontWeight: '700',
+    fontFamily: 'Inter-Bold',
     color: '#111827',
     marginBottom: 4,
   },
   appVersion: {
     fontSize: isTablet ? 14 : 12,
+    fontFamily: 'Inter-Regular',
     color: '#6B7280',
     marginBottom: 16,
   },
   appDescription: {
     fontSize: isTablet ? 14 : 12,
+    fontFamily: 'Inter-Regular',
     color: '#6B7280',
     textAlign: 'center',
     lineHeight: 20,

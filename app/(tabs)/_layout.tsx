@@ -1,44 +1,71 @@
-import { Stack } from 'expo-router';
-import { useFonts as useExpoFonts } from 'expo-font';
-import { Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold } from '@expo-google-fonts/inter';
-import { View, Text } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Tabs } from 'expo-router';
+import { Chrome as Home, Search, Heart, Settings, Plus } from 'lucide-react-native';
 
-export default function RootLayout() {
-  const [fontsLoaded, fontError] = useExpoFonts({
-    'Inter-Regular': Inter_400Regular,
-    'Inter-Medium': Inter_500Medium,
-    'Inter-SemiBold': Inter_600SemiBold,
-    'Inter-Bold': Inter_700Bold,
-  });
-
-  if (!fontsLoaded && !fontError) {
-    return (
-      <SafeAreaView>
-        <View>
-          <Text>Loading fonts...</Text>
-        </View>
-      </SafeAreaView>
-    );
-  }
-
-  if (fontError) {
-    console.error('Font loading error:', fontError);
-    return (
-      <SafeAreaView>
-        <View>
-          <Text>Error loading fonts: {fontError.message}</Text>
-        </View>
-      </SafeAreaView>
-    );
-  }
-
+export default function TabLayout() {
   return (
-    <Stack>
-      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-      <Stack.Screen name="drink/[id]" options={{ title: 'Drink Details' }} />
-      <Stack.Screen name="recipes" options={{ title: 'Recipes' }} />
-      <Stack.Screen name="favorites" options={{ title: 'Favorites' }} />
-    </Stack>
+    <Tabs
+      screenOptions={{
+        headerShown: false,
+        tabBarActiveTintColor: '#F59E0B',
+        tabBarInactiveTintColor: '#6B7280',
+        tabBarStyle: {
+          backgroundColor: '#FFFFFF',
+          borderTopWidth: 1,
+          borderTopColor: '#E5E7EB',
+          height: 80,
+          paddingBottom: 20,
+          paddingTop: 10,
+        },
+        tabBarLabelStyle: {
+          fontSize: 12,
+          fontFamily: 'Inter-Medium',
+        },
+      }}>
+      <Tabs.Screen
+        name="index"
+        options={{
+          title: 'Home',
+          tabBarIcon: ({ size, color }) => (
+            <Home size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="recipes"
+        options={{
+          title: 'Recipes',
+          tabBarIcon: ({ size, color }) => (
+            <Search size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="add-recipe"
+        options={{
+          title: 'Add Recipe',
+          tabBarIcon: ({ size, color }) => (
+            <Plus size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="favorites"
+        options={{
+          title: 'Favorites',
+          tabBarIcon: ({ size, color }) => (
+            <Heart size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="settings"
+        options={{
+          title: 'Settings',
+          tabBarIcon: ({ size, color }) => (
+            <Settings size={size} color={color} />
+          ),
+        }}
+      />
+    </Tabs>
   );
 }

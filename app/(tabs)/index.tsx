@@ -1,138 +1,63 @@
-import { useState, useEffect } from 'react';
+import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-// ... andre importer
 import { Coffee, Wine, Sparkles, TrendingUp } from 'lucide-react-native';
-
-const iconMap = {
-  Wine: Wine,
-  Coffee: Coffee,
-  Sparkles: Sparkles,
-  TrendingUp: TrendingUp,
-};
-
-export default function HomeScreen() {
-  const [fontsLoaded, fontError] = useFonts({
-    'Inter-Regular': Inter_400Regular,
-    'Inter-Medium': Inter_500Medium,
-    'Inter-SemiBold': Inter_600SemiBold,
-    'Inter-Bold': Inter_700Bold,
-  });
-  const { recipes, categories, loading, error } = useRecipes();
-  const router = useRouter();
-
-  if (!fontsLoaded && !fontError) {
-    return <View><Text>Loading fonts...</Text></View>;
-  }
-  if (fontError) {
-    return <View><Text>Error loading fonts: {fontError.message}</Text></View>;
-  }
-  if (loading) return <View><Text>Loading recipes...</Text></View>;
-  if (error) return <View><Text>Error: {error}</Text></View>;
-
-  const featuredDrinks = recipes.filter((recipe) => recipe.is_featured);
-
-  return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Drinks & Recipes</Text>
-          <Text style={styles.subtitle}>Professional drink recipes for your team</Text>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Categories</Text>
-          <View style={styles.categoriesGrid}>
-            {categories.map((category) => {
-              const IconComponent = iconMap[category.icon] || Sparkles; // Fallback til Sparkles
-              return (
-                <TouchableOpacity
-                  key={category.id}
-                  style={styles.categoryCard}
-                  onPress={() => router.push(`/recipes?category=${category.name}`)}
-                >
-                  <View style={[styles.categoryIcon, { backgroundColor: category.color }]}>
-                    <IconComponent size={24} color="#FFFFFF" />
-                  </View>
-                  <Text style={styles.categoryName}>{category.name}</Text>
-                  <Text style={styles.categoryCount}>
-                    {recipes.filter(r => r.category === category.name).length} recipes
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-        </View>
-
-        {/* ... resten av koden (Featured Drinks og Stats) */}
-      </ScrollView>
-    </SafeAreaView>
-  );
-}
-
-// Stil-definisjoner (uendret)
-import { useRecipes } from '@/hooks/useRecipes';
-import { useRouter } from 'expo-router';
-import { useFonts } from 'expo-font';
-import {
-  Inter_400Regular,
-  Inter_500Medium,
-  Inter_600SemiBold,
-  Inter_700Bold,
-} from '@expo-google-fonts/inter';
 
 const { width } = Dimensions.get('window');
 const isTablet = width >= 768;
 
+const featuredDrinks = [
+  {
+    id: 1,
+    name: 'Classic Mojito',
+    category: 'Cocktail',
+    image: 'https://images.pexels.com/photos/1304540/pexels-photo-1304540.jpeg?auto=compress&cs=tinysrgb&w=800',
+    difficulty: 'Easy',
+    time: '5 min'
+  },
+  {
+    id: 2,
+    name: 'Espresso Martini',
+    category: 'Coffee Cocktail',
+    image: 'https://images.pexels.com/photos/2789328/pexels-photo-2789328.jpeg?auto=compress&cs=tinysrgb&w=800',
+    difficulty: 'Medium',
+    time: '3 min'
+  },
+  {
+    id: 3,
+    name: 'Virgin Piña Colada',
+    category: 'Mocktail',
+    image: 'https://images.pexels.com/photos/1304540/pexels-photo-1304540.jpeg?auto=compress&cs=tinysrgb&w=800',
+    difficulty: 'Easy',
+    time: '4 min'
+  }
+];
+
+const categories = [
+  { id: 1, name: 'Cocktails', icon: Wine, color: '#DC2626', count: 24 },
+  { id: 2, name: 'Coffee Drinks', icon: Coffee, color: '#92400E', count: 18 },
+  { id: 3, name: 'Mocktails', icon: Sparkles, color: '#0F766E', count: 15 },
+  { id: 4, name: 'Trending', icon: TrendingUp, color: '#7C3AED', count: 8 }
+];
+
 export default function HomeScreen() {
-  const [fontsLoaded, fontError] = useFonts({
-    'Inter-Regular': Inter_400Regular,
-    'Inter-Medium': Inter_500Medium,
-    'Inter-SemiBold': Inter_600SemiBold,
-    'Inter-Bold': Inter_700Bold,
-  });
-  const { recipes, loading, error } = useRecipes(); // Legg til denne linjen
-  const router = useRouter();
-
-  if (!fontsLoaded && !fontError) {
-    return <View><Text>Loading fonts...</Text></View>;
-  }
-
-  if (fontError) {
-    console.error('Font loading error:', fontError);
-    return <View><Text>Error loading fonts: {fontError.message}</Text></View>;
-  }
-
-  if (loading) return <View><Text>Loading recipes...</Text></View>;
-  if (error) return <View><Text>Error: {error}</Text></View>;
-
-  const featuredDrinks = recipes.filter((recipe) => recipe.is_featured);
-  const categories = [
-    { id: 1, name: 'Cocktails', icon: Wine, color: '#DC2626', count: recipes.filter(r => r.category === 'Cocktail').length },
-    { id: 2, name: 'Coffee Drinks', icon: Coffee, color: '#92400E', count: recipes.filter(r => r.category === 'Coffee Cocktail').length },
-    { id: 3, name: 'Mocktails', icon: Sparkles, color: '#0F766E', count: recipes.filter(r => r.category === 'Mocktail').length },
-    { id: 4, name: 'Trending', icon: TrendingUp, color: '#7C3AED', count: recipes.filter(r => r.is_featured).length },
-  ];
-
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView showsVerticalScrollIndicator={false}>
+        {/* Header */}
         <View style={styles.header}>
           <Text style={styles.title}>Drinks & Recipes</Text>
           <Text style={styles.subtitle}>Professional drink recipes for your team</Text>
         </View>
 
+        {/* Categories */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Categories</Text>
           <View style={styles.categoriesGrid}>
             {categories.map((category) => {
               const IconComponent = category.icon;
               return (
-                <TouchableOpacity
-                  key={category.id}
-                  style={styles.categoryCard}
-                  onPress={() => router.push(`/recipes?category=${category.name}`)}
-                >
+                <TouchableOpacity key={category.id} style={styles.categoryCard}>
                   <View style={[styles.categoryIcon, { backgroundColor: category.color }]}>
                     <IconComponent size={24} color="#FFFFFF" />
                   </View>
@@ -144,23 +69,20 @@ export default function HomeScreen() {
           </View>
         </View>
 
+        {/* Featured Drinks */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Featured Drinks</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             <View style={styles.featuredContainer}>
               {featuredDrinks.map((drink) => (
-                <TouchableOpacity
-                  key={drink.id}
-                  style={styles.featuredCard}
-                  onPress={() => router.push(`/drink/${drink.id}`)}
-                >
-                  <Image source={{ uri: drink.image_url }} style={styles.featuredImage} />
+                <TouchableOpacity key={drink.id} style={styles.featuredCard}>
+                  <Image source={{ uri: drink.image }} style={styles.featuredImage} />
                   <View style={styles.featuredContent}>
                     <Text style={styles.featuredName}>{drink.name}</Text>
                     <Text style={styles.featuredCategory}>{drink.category}</Text>
                     <View style={styles.featuredMeta}>
                       <Text style={styles.featuredDifficulty}>{drink.difficulty}</Text>
-                      <Text style={styles.featuredTime}>{drink.time_minutes} min</Text>
+                      <Text style={styles.featuredTime}>{drink.time}</Text>
                     </View>
                   </View>
                 </TouchableOpacity>
@@ -169,20 +91,19 @@ export default function HomeScreen() {
           </ScrollView>
         </View>
 
+        {/* Quick Stats */}
         <View style={styles.section}>
           <View style={styles.statsContainer}>
             <View style={styles.statCard}>
-              <Text style={styles.statNumber}>{recipes.length}</Text>
+              <Text style={styles.statNumber}>67</Text>
               <Text style={styles.statLabel}>Total Recipes</Text>
             </View>
             <View style={styles.statCard}>
-              <Text style={styles.statNumber}>{recipes.filter(r => r.is_featured).length}</Text>
+              <Text style={styles.statNumber}>12</Text>
               <Text style={styles.statLabel}>Most Popular</Text>
             </View>
             <View style={styles.statCard}>
-              <Text style={styles.statNumber}>
-                {recipes.filter(r => new Date(r.created_at) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)).length}
-              </Text>
+              <Text style={styles.statNumber}>8</Text>
               <Text style={styles.statLabel}>New This Week</Text>
             </View>
           </View>
@@ -192,7 +113,6 @@ export default function HomeScreen() {
   );
 }
 
-// Stil-definisjoner (uendret)
 const styles = StyleSheet.create({
   container: {
     flex: 1,
