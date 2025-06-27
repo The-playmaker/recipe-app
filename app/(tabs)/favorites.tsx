@@ -1,234 +1,131 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Dimensions, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Heart, Clock, ChefHat, Trash2 } from 'lucide-react-native';
-import { useState } from 'react';
+import { Heart, Clock, ChefHat } from 'lucide-react-native';
+import { useState, useEffect } from 'react';
+import { useFavorites } from '@/hooks/useFavorites';
+import { Recipe } from '@/hooks/useRecipes';
+import { router } from 'expo-router';
+import { db } from '@/lib/firebase';
+import { collection, query, where, getDocs, documentId } from 'firebase/firestore';
+import { useTheme } from '@/hooks/useTheme'; // Importerer theme-hooken
 
 const { width } = Dimensions.get('window');
 const isTablet = width >= 768;
 
-const initialFavorites = [
-  {
-    id: 1,
-    name: 'Classic Mojito',
-    category: 'Cocktail',
-    image: 'https://images.pexels.com/photos/1304540/pexels-photo-1304540.jpeg?auto=compress&cs=tinysrgb&w=800',
-    difficulty: 'Easy',
-    time: '5 min',
-    ingredients: ['White rum', 'Fresh mint', 'Lime juice', 'Sugar', 'Soda water'],
-    description: 'A refreshing Cuban cocktail with fresh mint and lime.'
-  },
-  {
-    id: 3,
-    name: 'Virgin Piña Colada',
-    category: 'Mocktail',
-    image: 'https://images.pexels.com/photos/1304540/pexels-photo-1304540.jpeg?auto=compress&cs=tinysrgb&w=800',
-    difficulty: 'Easy',
-    time: '4 min',
-    ingredients: ['Pineapple juice', 'Coconut cream', 'Ice', 'Pineapple wedge'],
-    description: 'A tropical non-alcoholic drink perfect for any time of day.'
-  },
-  {
-    id: 6,
-    name: 'Cucumber Mint Cooler',
-    category: 'Mocktail',
-    image: 'https://images.pexels.com/photos/1304540/pexels-photo-1304540.jpeg?auto=compress&cs=tinysrgb&w=800',
-    difficulty: 'Easy',
-    time: '3 min',
-    ingredients: ['Cucumber', 'Fresh mint', 'Lime juice', 'Honey', 'Sparkling water'],
-    description: 'A refreshing cucumber-based drink with fresh mint.'
-  }
-];
-
 export default function FavoritesScreen() {
-  const [favorites, setFavorites] = useState(initialFavorites);
+  const { favorites, toggleFavorite, loading: favoritesLoading } = useFavorites();
+  const { colors } = useTheme(); // Henter farger
+  const [favoriteRecipes, setFavoriteRecipes] = useState<Recipe[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const removeFavorite = (recipeId: number) => {
-    setFavorites(prevFavorites =>
-      prevFavorites.filter(recipe => recipe.id !== recipeId)
-    );
-  };
+  useEffect(() => {
+    if (favoritesLoading) {
+      return;
+    }
+    const fetchFavoriteRecipes = async () => {
+      if (favorites.size === 0) {
+        setFavoriteRecipes([]);
+        setIsLoading(false);
+        return;
+      }
+      try {
+        setIsLoading(true);
+        const favoriteIds = Array.from(favorites);
+        const recipesRef = collection(db, 'drinks');
+        const q = query(recipesRef, where(documentId(), 'in', favoriteIds));
+        const querySnapshot = await getDocs(q);
+        const recipesData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Recipe[];
+        setFavoriteRecipes(recipesData);
+      } catch (e) {
+        console.error("Failed to fetch favorite recipes:", e);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchFavoriteRecipes();
+  }, [favorites, favoritesLoading]);
 
-  if (favorites.length === 0) {
+  const dynamicStyles = StyleSheet.create({
+      container: { flex: 1, backgroundColor: colors.background },
+      text: { color: colors.text },
+      textSecondary: { color: colors.textSecondary },
+      header: { borderBottomColor: colors.border },
+      card: { backgroundColor: colors.card, borderColor: colors.border, shadowColor: '#000' },
+      emptyStateIcon: { color: colors.border },
+  });
+
+  if (isLoading) {
     return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Favorite Recipes</Text>
-          <Text style={styles.subtitle}>Your bookmarked drinks</Text>
-        </View>
-        <View style={styles.emptyState}>
-          <Heart size={64} color="#E5E7EB" />
-          <Text style={styles.emptyTitle}>No favorites yet</Text>
-          <Text style={styles.emptySubtitle}>
-            Add recipes to your favorites by tapping the heart icon
-          </Text>
+      <SafeAreaView style={dynamicStyles.container}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={{color: colors.textSecondary, marginTop: 10}}>Loading favorites...</Text>
         </View>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.title}>Favorite Recipes</Text>
-        <Text style={styles.subtitle}>{favorites.length} saved recipes</Text>
+    <SafeAreaView style={dynamicStyles.container}>
+      <View style={[styles.header, dynamicStyles.header]}>
+        <Text style={[styles.title, dynamicStyles.text]}>My Favorites</Text>
+        <Text style={[styles.subtitle, dynamicStyles.textSecondary]}>You have {favoriteRecipes.length} favorite recipes</Text>
       </View>
 
-      {/* Favorites List */}
-      <ScrollView style={styles.favoritesContainer} showsVerticalScrollIndicator={false}>
-        {favorites.map((recipe) => (
-          <TouchableOpacity key={recipe.id} style={styles.favoriteCard}>
-            <Image source={{ uri: recipe.image }} style={styles.favoriteImage} />
-            <View style={styles.favoriteContent}>
-              <View style={styles.favoriteInfo}>
-                <Text style={styles.favoriteName}>{recipe.name}</Text>
-                <Text style={styles.favoriteCategory}>{recipe.category}</Text>
-                <Text style={styles.favoriteDescription}>{recipe.description}</Text>
-                <View style={styles.favoriteMeta}>
-                  <View style={styles.favoriteMetaItem}>
-                    <Clock size={16} color="#6B7280" />
-                    <Text style={styles.favoriteMetaText}>{recipe.time}</Text>
-                  </View>
-                  <View style={styles.favoriteMetaItem}>
-                    <ChefHat size={16} color="#6B7280" />
-                    <Text style={styles.favoriteMetaText}>{recipe.difficulty}</Text>
+      <ScrollView style={styles.recipesContainer} showsVerticalScrollIndicator={false}>
+        {favoriteRecipes.length > 0 ? (
+          <View style={styles.recipesGrid}>
+            {favoriteRecipes.map((recipe) => (
+              <TouchableOpacity key={recipe.id} style={[styles.recipeCard, dynamicStyles.card]} onPress={() => router.push(`/recipe/${recipe.id}`)}>
+                <View style={styles.recipeImageContainer}>
+                  <Image source={{ uri: recipe.image }} style={styles.recipeImage} />
+                  <TouchableOpacity style={styles.favoriteButton} onPress={() => toggleFavorite(recipe.id)}>
+                    <Heart size={18} color={'#DC2626'} fill={'#DC2626'} />
+                  </TouchableOpacity>
+                </View>
+                <View style={styles.recipeContent}>
+                  <Text style={[styles.recipeName, dynamicStyles.text]} numberOfLines={1}>{recipe.name}</Text>
+                  <Text style={styles.recipeCategory}>{recipe.category}</Text>
+                  <View style={[styles.recipeMeta, {borderTopColor: colors.border}]}>
+                    <View style={styles.recipeMetaItem}><Clock size={14} color={colors.textSecondary} /><Text style={[styles.recipeMetaText, dynamicStyles.textSecondary]}>{recipe.time}</Text></View>
+                    <View style={styles.recipeMetaItem}><ChefHat size={14} color={colors.textSecondary} /><Text style={[styles.recipeMetaText, dynamicStyles.textSecondary]}>{recipe.difficulty}</Text></View>
                   </View>
                 </View>
-                <Text style={styles.ingredientsPreview}>
-                  {recipe.ingredients.join(', ')}
-                </Text>
-              </View>
-              <TouchableOpacity
-                style={styles.removeButton}
-                onPress={() => removeFavorite(recipe.id)}
-              >
-                <Trash2 size={20} color="#DC2626" />
               </TouchableOpacity>
-            </View>
-          </TouchableOpacity>
-        ))}
-        <View style={styles.bottomSpacing} />
+            ))}
+          </View>
+        ) : (
+          <View style={styles.emptyState}>
+            <Heart size={48} style={dynamicStyles.emptyStateIcon} />
+            <Text style={[styles.emptyStateText, dynamicStyles.text]}>No Favorites Yet</Text>
+            <Text style={[styles.emptyStateSubtext, dynamicStyles.textSecondary]}>
+              Tap the heart icon on a recipe to add it to your favorites.
+            </Text>
+          </View>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F9FAFB',
-  },
-  header: {
-    padding: 24,
-    paddingTop: 16,
-  },
-  title: {
-    fontSize: isTablet ? 32 : 28,
-    fontFamily: 'Inter-Bold',
-    color: '#111827',
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: isTablet ? 18 : 16,
-    fontFamily: 'Inter-Regular',
-    color: '#6B7280',
-  },
-  emptyState: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 48,
-  },
-  emptyTitle: {
-    fontSize: isTablet ? 24 : 20,
-    fontFamily: 'Inter-SemiBold',
-    color: '#6B7280',
-    marginTop: 16,
-    marginBottom: 8,
-  },
-  emptySubtitle: {
-    fontSize: isTablet ? 16 : 14,
-    fontFamily: 'Inter-Regular',
-    color: '#9CA3AF',
-    textAlign: 'center',
-    lineHeight: 20,
-  },
-  favoritesContainer: {
-    flex: 1,
-    paddingHorizontal: 24,
-  },
-  favoriteCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    marginBottom: 16,
-    flexDirection: 'row',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  favoriteImage: {
-    width: isTablet ? 140 : 120,
-    height: isTablet ? 140 : 120,
-    borderTopLeftRadius: 16,
-    borderBottomLeftRadius: 16,
-  },
-  favoriteContent: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  favoriteInfo: {
-    flex: 1,
-    padding: 16,
-  },
-  favoriteName: {
-    fontSize: isTablet ? 18 : 16,
-    fontFamily: 'Inter-SemiBold',
-    color: '#111827',
-    marginBottom: 4,
-  },
-  favoriteCategory: {
-    fontSize: isTablet ? 14 : 12,
-    fontFamily: 'Inter-Medium',
-    color: '#F59E0B',
-    marginBottom: 8,
-  },
-  favoriteDescription: {
-    fontSize: isTablet ? 14 : 12,
-    fontFamily: 'Inter-Regular',
-    color: '#6B7280',
-    marginBottom: 12,
-    lineHeight: 18,
-  },
-  favoriteMeta: {
-    flexDirection: 'row',
-    gap: 16,
-    marginBottom: 8,
-  },
-  favoriteMetaItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  favoriteMetaText: {
-    fontSize: isTablet ? 12 : 11,
-    fontFamily: 'Inter-Regular',
-    color: '#6B7280',
-  },
-  ingredientsPreview: {
-    fontSize: isTablet ? 12 : 10,
-    fontFamily: 'Inter-Regular',
-    color: '#9CA3AF',
-    lineHeight: 16,
-  },
-  removeButton: {
-    padding: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  bottomSpacing: {
-    height: 100,
-  },
+    loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+    header: { padding: 24, paddingTop: 16, borderBottomWidth: 1, },
+    title: { fontSize: isTablet ? 32 : 28, fontWeight: 'bold', marginBottom: 4 },
+    subtitle: { fontSize: isTablet ? 18 : 16 },
+    recipesContainer: { flex: 1 },
+    recipesGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 16, padding: 24 },
+    recipeCard: { borderRadius: 16, width: isTablet ? (width - 72) / 3 : (width - 64) / 2, shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 2, borderWidth: 1 },
+    recipeImageContainer: { position: 'relative' },
+    recipeImage: { width: '100%', height: 140, borderTopLeftRadius: 15, borderTopRightRadius: 15 },
+    favoriteButton: { position: 'absolute', top: 12, right: 12, backgroundColor: 'rgba(255, 255, 255, 0.9)', borderRadius: 20, padding: 6 },
+    recipeContent: { padding: 12 },
+    recipeName: { fontSize: 14, fontWeight: '600', marginBottom: 4 },
+    recipeCategory: { fontSize: 11, fontWeight: '500', color: '#F59E0B', marginBottom: 8 },
+    recipeMeta: { flexDirection: 'row', justifyContent: 'space-between', borderTopWidth: 1, paddingTop: 8 },
+    recipeMetaItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+    recipeMetaText: { fontSize: 11 },
+    emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 48, paddingTop: 100 },
+    emptyStateText: { marginTop: 16, fontSize: 18, fontWeight: '600' },
+    emptyStateSubtext: { marginTop: 8, fontSize: 14, textAlign: 'center', lineHeight: 20 },
 });
