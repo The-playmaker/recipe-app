@@ -1,71 +1,68 @@
 import { Tabs } from 'expo-router';
-import { Chrome as Home, Search, Heart, Settings, Plus } from 'lucide-react-native';
+import { Home, Heart, PlusSquare, Settings as SettingsIcon } from 'lucide-react-native';
+import { ThemeProvider, useTheme } from '@/hooks/useTheme';
 
-export default function TabLayout() {
+function ThemedTabsLayout() {
+  const { colors } = useTheme();
+
   return (
     <Tabs
       screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: '#F59E0B',
-        tabBarInactiveTintColor: '#6B7280',
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.textSecondary,
         tabBarStyle: {
-          backgroundColor: '#FFFFFF',
-          borderTopWidth: 1,
-          borderTopColor: '#E5E7EB',
-          height: 80,
-          paddingBottom: 20,
-          paddingTop: 10,
+          backgroundColor: colors.card,
+          borderTopColor: colors.border,
         },
-        tabBarLabelStyle: {
-          fontSize: 12,
-          fontFamily: 'Inter-Medium',
+        headerStyle: {
+          backgroundColor: colors.card,
         },
-      }}>
+        headerTintColor: colors.text,
+        headerTitleStyle: {
+          fontWeight: 'bold',
+        },
+      }}
+    >
       <Tabs.Screen
         name="index"
         options={{
           title: 'Home',
-          tabBarIcon: ({ size, color }) => (
-            <Home size={size} color={color} />
-          ),
+          headerShown: false,
+          tabBarIcon: ({ color }) => <Home size={24} color={color} />,
         }}
       />
       <Tabs.Screen
         name="recipes"
         options={{
           title: 'Recipes',
-          tabBarIcon: ({ size, color }) => (
-            <Search size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="add-recipe"
-        options={{
-          title: 'Add Recipe',
-          tabBarIcon: ({ size, color }) => (
-            <Plus size={size} color={color} />
-          ),
+          headerShown: false,
+          tabBarIcon: ({ color }) => <PlusSquare size={24} color={color} />,
         }}
       />
       <Tabs.Screen
         name="favorites"
         options={{
           title: 'Favorites',
-          tabBarIcon: ({ size, color }) => (
-            <Heart size={size} color={color} />
-          ),
+          headerShown: false,
+          tabBarIcon: ({ color }) => <Heart size={24} color={color} />,
         }}
       />
       <Tabs.Screen
         name="settings"
         options={{
           title: 'Settings',
-          tabBarIcon: ({ size, color }) => (
-            <Settings size={size} color={color} />
-          ),
+          headerShown: false,
+          tabBarIcon: ({ color }) => <SettingsIcon size={24} color={color} />,
         }}
       />
     </Tabs>
+  );
+}
+
+export default function TabsLayout() {
+  return (
+    <ThemeProvider>
+      <ThemedTabsLayout />
+    </ThemeProvider>
   );
 }

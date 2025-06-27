@@ -1,301 +1,176 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, Dimensions, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, TextInput, Dimensions, Alert, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Settings, Bell, Palette, Download, Info, CircleHelp as HelpCircle, ChevronRight } from 'lucide-react-native';
+import { Search, Clock, ChefHat, Heart, CreditCard as Edit, Trash2 } from 'lucide-react-native';
 import { useState, useEffect } from 'react';
-import { useRecipes } from '@/hooks/useRecipes'; // Importerer hooken vår
-import firestore from '@react-native-firebase/firestore'; // Importerer for å telle kategorier
+import { useRecipes, Recipe } from '@/hooks/useRecipes';
+import { useFavorites } from '@/hooks/useFavorites';
+import { router, useLocalSearchParams } from 'expo-router';
+import { useTheme } from '@/hooks/useTheme'; // Importerer theme-hooken
 
 const { width } = Dimensions.get('window');
 const isTablet = width >= 768;
 
-export default function SettingsScreen() {
-  // State for toggles
-  const [notifications, setNotifications] = useState(true);
-  const [darkMode, setDarkMode] = useState(false);
-  const [autoSync, setAutoSync] = useState(true);
-  
-  // Henter data med hooken vår
-  const { recipes, loading: recipesLoading } = useRecipes();
-  
-  // Egen state for antall kategorier
-  const [categoriesCount, setCategoriesCount] = useState(0);
-  const [loadingCategories, setLoadingCategories] = useState(true);
+const categories = ['All', 'Cocktail', 'Mocktail', 'Coffee', 'Coffee Cocktail', 'Beer', 'Wine', 'Spirits', 'Hot Drinks'];
 
-  // Henter antall kategorier når komponenten vises
+// Har kun én 'export default' på toppnivå
+export default function RecipesScreen() {
+  const { colors } = useTheme(); // Henter farger for Dark Mode
+  const { category: initialCategory } = useLocalSearchParams<{ category: string }>();
+  const { recipes, loading, error, deleteRecipe, fetchRecipes } = useRecipes();
+  const { favorites, toggleFavorite, loading: favoritesLoading } = useFavorites();
+  
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState(initialCategory || 'All');
+
   useEffect(() => {
-    const fetchCategoriesCount = async () => {
-      try {
-        const categoriesSnapshot = await firestore().collection('categories').get();
-        setCategoriesCount(categoriesSnapshot.size);
-      } catch (error) {
-        console.error("Failed to fetch category count:", error);
-        setCategoriesCount(0); // Sett til 0 ved feil
-      } finally {
-        setLoadingCategories(false);
-      }
-    };
-    fetchCategoriesCount();
-  }, []);
-
-  // Kombinert laste-status
-  const isLoading = recipesLoading || loadingCategories;
-
-  // Dynamisk generert statistikk
-  const appStats = [
-    { label: 'Total Recipes', value: recipes.length.toString() },
-    { label: 'Favorites', value: '12' }, // Merk: Favoritter er ikke globalt sporet ennå
-    { label: 'Categories', value: categoriesCount.toString() },
-    { label: 'Last Updated', value: 'Today' } // Merk: "Last updated" kan gjøres mer avansert senere
-  ];
-
-  // Data for innstillingslisten (samme som før)
-  const settingsData = [
-    {
-      section: 'App Preferences',
-      items: [
-        { icon: Bell, title: 'Notifications', subtitle: 'Get alerts for new recipes', type: 'toggle', value: notifications, onToggle: setNotifications },
-        { icon: Palette, title: 'Dark Mode', subtitle: 'Switch to dark theme', type: 'toggle', value: darkMode, onToggle: setDarkMode },
-        { icon: Download, title: 'Auto Sync', subtitle: 'Automatically sync recipes', type: 'toggle', value: autoSync, onToggle: setAutoSync }
-      ]
-    },
-    {
-      section: 'Support',
-      items: [
-        { icon: HelpCircle, title: 'Help & Support', subtitle: 'Get help with the app', type: 'navigation' },
-        { icon: Info, title: 'About', subtitle: 'App version and info', type: 'navigation' }
-      ]
+    if (initialCategory) {
+      setSelectedCategory(initialCategory);
     }
-  ];
+  }, [initialCategory]);
+
+  useEffect(() => {
+    fetchRecipes(selectedCategory);
+  }, [selectedCategory, fetchRecipes]);
+
+  const filteredRecipes = recipes.filter((recipe: Recipe) => {
+    const searchLower = searchQuery.toLowerCase();
+    const matchesIngredients = recipe.ingredients?.some(ing => ing.toLowerCase().includes(searchLower)) || false;
+    return recipe.name.toLowerCase().includes(searchLower) || matchesIngredients;
+  });
+
+  const handleDeleteRecipe = (recipeId: string, recipeName: string) => {
+    Alert.alert('Delete Recipe', `Are you sure you want to delete "${recipeName}"?`, [{ text: 'Cancel', style: 'cancel' }, { text: 'Delete', style: 'destructive', onPress: () => deleteRecipe(recipeId) }]);
+  };
+
+  // Lager dynamiske stiler som endrer seg med temaet
+  const dynamicStyles = StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background },
+    loadingText: { color: colors.textSecondary },
+    errorText: { color: '#DC2626' },
+    errorSubtext: { color: colors.textSecondary },
+    header: { borderBottomColor: colors.border },
+    title: { color: colors.text },
+    subtitle: { color: colors.textSecondary },
+    searchBar: { backgroundColor: colors.card, borderColor: colors.border },
+    searchInput: { color: colors.text },
+    categoriesContainer: { borderBottomColor: colors.border },
+    categoryChip: { backgroundColor: colors.card, borderColor: colors.border },
+    categoryChipText: { color: colors.textSecondary },
+    categoryChipTextActive: { color: '#FFFFFF' },
+    recipeCard: { backgroundColor: colors.card, borderColor: colors.border, shadowColor: '#000' },
+    recipeName: { color: colors.text },
+    recipeDescription: { color: colors.textSecondary },
+    recipeMeta: { borderTopColor: colors.border },
+    recipeMetaText: { color: colors.textSecondary },
+    ingredientsCount: { color: colors.textSecondary, borderTopColor: colors.border },
+    emptyStateText: { color: colors.textSecondary },
+    emptyStateSubtext: { color: colors.textSecondary }
+  });
+
+  if (loading || favoritesLoading) {
+    return (
+      <SafeAreaView style={dynamicStyles.container}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={[styles.loadingText, dynamicStyles.loadingText]}>Loading recipes...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (error) {
+    return (
+      <SafeAreaView style={dynamicStyles.container}>
+        <View style={styles.errorContainer}>
+          <Text style={[styles.errorText, dynamicStyles.errorText]}>Error: {error}</Text>
+          <Text style={[styles.errorSubtext, dynamicStyles.errorSubtext]}>Please check your connection and index.</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
-    <SafeAreaView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.title}>Settings</Text>
-        <Text style={styles.subtitle}>Customize your experience</Text>
+    <SafeAreaView style={dynamicStyles.container}>
+      <View style={[styles.header, dynamicStyles.header]}>
+        <Text style={[styles.title, dynamicStyles.title]}>Recipe Collection</Text>
+        <Text style={[styles.subtitle, dynamicStyles.subtitle]}>{filteredRecipes.length} recipes available</Text>
       </View>
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* App Stats */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>App Statistics</Text>
-          {isLoading ? (
-            <ActivityIndicator size="small" color="#F59E0B" />
-          ) : (
-            <View style={styles.statsGrid}>
-              {appStats.map((stat, index) => (
-                <View key={index} style={styles.statCard}>
-                  <Text style={styles.statValue}>{stat.value}</Text>
-                  <Text style={styles.statLabel}>{stat.label}</Text>
-                </View>
-              ))}
-            </View>
-          )}
+      <View style={styles.searchContainer}>
+        <View style={[styles.searchBar, dynamicStyles.searchBar]}>
+          <Search size={20} color={colors.textSecondary} />
+          <TextInput style={[styles.searchInput, dynamicStyles.searchInput]} placeholder="Search recipes or ingredients..." value={searchQuery} onChangeText={setSearchQuery} placeholderTextColor={colors.textSecondary} />
         </View>
+      </View>
 
-        {/* Settings Sections */}
-        {settingsData.map((section, sectionIndex) => (
-          <View key={sectionIndex} style={styles.section}>
-            <Text style={styles.sectionTitle}>{section.section}</Text>
-            <View style={styles.settingsGroup}>
-              {section.items.map((item, itemIndex) => {
-                const IconComponent = item.icon;
-                return (
-                  <TouchableOpacity
-                    key={itemIndex}
-                    style={[
-                      styles.settingItem,
-                      itemIndex === section.items.length - 1 && styles.settingItemLast
-                    ]}
-                  >
-                    <View style={styles.settingIcon}>
-                      <IconComponent size={20} color="#6B7280" />
-                    </View>
-                    <View style={styles.settingContent}>
-                      <Text style={styles.settingTitle}>{item.title}</Text>
-                      <Text style={styles.settingSubtitle}>{item.subtitle}</Text>
-                    </View>
-                    <View style={styles.settingControl}>
-                      {item.type === 'toggle' && (
-                        <Switch
-                          value={item.value}
-                          onValueChange={item.onToggle}
-                          trackColor={{ false: '#E5E7EB', true: '#F59E0B' }}
-                          thumbColor="#FFFFFF"
-                        />
-                      )}
-                      {item.type === 'navigation' && (
-                        <ChevronRight size={20} color="#9CA3AF" />
-                      )}
-                    </View>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-          </View>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={[styles.categoriesContainer, dynamicStyles.categoriesContainer]}>
+        {categories.map((category) => (
+          <TouchableOpacity key={category} style={[styles.categoryChip, dynamicStyles.categoryChip, selectedCategory === category && styles.categoryChipActive]} onPress={() => setSelectedCategory(category)}>
+            <Text style={[styles.categoryChipText, selectedCategory === category ? dynamicStyles.categoryChipTextActive : dynamicStyles.categoryChipText]}>{category}</Text>
+          </TouchableOpacity>
         ))}
+      </ScrollView>
 
-        {/* App Info */}
-        <View style={styles.section}>
-          <View style={styles.appInfo}>
-            <Text style={styles.appName}>Drinks & Recipes</Text>
-            <Text style={styles.appVersion}>Version 1.0.0</Text>
-            <Text style={styles.appDescription}>
-              Professional drink recipes for hospitality teams. Built with React Native and Expo.
-            </Text>
-          </View>
+      <ScrollView style={styles.recipesContainer} showsVerticalScrollIndicator={false}>
+        <View style={styles.recipesGrid}>
+          {filteredRecipes.map((recipe) => (
+            <TouchableOpacity key={recipe.id} style={[styles.recipeCard, dynamicStyles.recipeCard]} onPress={() => router.push(`/recipe/${recipe.id}`)}>
+              <View style={styles.recipeImageContainer}>
+                <Image source={{ uri: recipe.image }} style={styles.recipeImage} />
+                <TouchableOpacity style={styles.favoriteButton} onPress={(e) => { e.stopPropagation(); toggleFavorite(recipe.id); }}><Heart size={18} color={favorites.has(recipe.id) ? '#DC2626' : colors.textSecondary} fill={favorites.has(recipe.id) ? '#DC2626' : 'transparent'} /></TouchableOpacity>
+                <View style={styles.actionButtons}><TouchableOpacity style={styles.actionButton} onPress={(e) => { e.stopPropagation(); router.push(`/edit-recipe/${recipe.id}`); }}><Edit size={16} color={colors.primary} /></TouchableOpacity><TouchableOpacity style={[styles.actionButton, styles.deleteButton]} onPress={(e) => { e.stopPropagation(); handleDeleteRecipe(recipe.id, recipe.name); }}><Trash2 size={16} color="#DC2626" /></TouchableOpacity></View>
+              </View>
+              <View style={styles.recipeContent}>
+                <Text style={[styles.recipeName, dynamicStyles.recipeName]} numberOfLines={1}>{recipe.name}</Text>
+                <Text style={styles.recipeCategory}>{recipe.category}</Text>
+                <Text style={[styles.recipeDescription, dynamicStyles.recipeDescription]} numberOfLines={2}>{recipe.description}</Text>
+                <View style={[styles.recipeMeta, dynamicStyles.recipeMeta]}><View style={styles.recipeMetaItem}><Clock size={14} color={colors.textSecondary} /><Text style={[styles.recipeMetaText, dynamicStyles.recipeMetaText]}>{recipe.time}</Text></View><View style={styles.recipeMetaItem}><ChefHat size={14} color={colors.textSecondary} /><Text style={[styles.recipeMetaText, dynamicStyles.recipeMetaText]}>{recipe.difficulty}</Text></View></View>
+                <Text style={[styles.ingredientsCount, dynamicStyles.ingredientsCount]}>{recipe.ingredients?.length || 0} ingredients</Text>
+              </View>
+            </TouchableOpacity>
+          ))}
         </View>
-
-        <View style={styles.bottomSpacing} />
+        
+        {filteredRecipes.length === 0 && !loading && (
+          <View style={styles.emptyState}><Text style={[styles.emptyStateText, dynamicStyles.emptyStateText]}>No recipes found</Text><Text style={[styles.emptyStateSubtext, dynamicStyles.emptyStateSubtext]}>Try adjusting your filters.</Text></View>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
 }
 
+// Generelle stiler som ikke avhenger av tema
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F9FAFB',
-  },
-  header: {
-    padding: 24,
-    paddingTop: 16,
-  },
-  title: {
-    fontSize: isTablet ? 32 : 28,
-    // fontFamily: 'Inter-Bold',
-    fontWeight: 'bold',
-    color: '#111827',
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: isTablet ? 18 : 16,
-    // fontFamily: 'Inter-Regular',
-    color: '#6B7280',
-  },
-  content: {
-    flex: 1,
-    paddingHorizontal: 24,
-  },
-  section: {
-    marginBottom: 32,
-  },
-  sectionTitle: {
-    fontSize: isTablet ? 20 : 18,
-    // fontFamily: 'Inter-SemiBold',
-    fontWeight: '600',
-    color: '#111827',
-    marginBottom: 16,
-  },
-  statsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-  },
-  statCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 16,
-    alignItems: 'center',
-    minWidth: isTablet ? 140 : 120,
-    flex: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  statValue: {
-    fontSize: isTablet ? 24 : 20,
-    // fontFamily: 'Inter-Bold',
-    fontWeight: 'bold',
-    color: '#F59E0B',
-    marginBottom: 4,
-  },
-  statLabel: {
-    fontSize: isTablet ? 12 : 11,
-    // fontFamily: 'Inter-Regular',
-    color: '#6B7280',
-    textAlign: 'center',
-  },
-  settingsGroup: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  settingItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
-  },
-  settingItemLast: {
-    borderBottomWidth: 0,
-  },
-  settingIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 8,
-    backgroundColor: '#F3F4F6',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 16,
-  },
-  settingContent: {
-    flex: 1,
-  },
-  settingTitle: {
-    fontSize: isTablet ? 16 : 14,
-    // fontFamily: 'Inter-SemiBold',
-    fontWeight: '600',
-    color: '#111827',
-    marginBottom: 2,
-  },
-  settingSubtitle: {
-    fontSize: isTablet ? 14 : 12,
-    // fontFamily: 'Inter-Regular',
-    color: '#6B7280',
-  },
-  settingControl: {
-    marginLeft: 16,
-  },
-  appInfo: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 24,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  appName: {
-    fontSize: isTablet ? 24 : 20,
-    // fontFamily: 'Inter-Bold',
-    fontWeight: 'bold',
-    color: '#111827',
-    marginBottom: 4,
-  },
-  appVersion: {
-    fontSize: isTablet ? 14 : 12,
-    // fontFamily: 'Inter-Regular',
-    color: '#6B7280',
-    marginBottom: 16,
-  },
-  appDescription: {
-    fontSize: isTablet ? 14 : 12,
-    // fontFamily: 'Inter-Regular',
-    color: '#6B7280',
-    textAlign: 'center',
-    lineHeight: 20,
-  },
-  bottomSpacing: {
-    height: 100,
-  },
+  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  errorContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 24 },
+  header: { padding: 24, paddingTop: 16, borderBottomWidth: 1 },
+  title: { fontSize: isTablet ? 32 : 28, fontWeight: 'bold', marginBottom: 4 },
+  subtitle: { fontSize: isTablet ? 18 : 16 },
+  searchContainer: { flexDirection: 'row', paddingHorizontal: 24, paddingVertical: 16, gap: 12 },
+  searchBar: { flex: 1, flexDirection: 'row', alignItems: 'center', borderRadius: 12, paddingHorizontal: 16, gap: 12, borderWidth: 1 },
+  searchInput: { flex: 1, fontSize: 14, paddingVertical: 10 },
+  categoriesContainer: { paddingHorizontal: 24, paddingBottom: 16, borderBottomWidth: 1, flexGrow: 0 },
+  categoryChip: { borderRadius: 20, paddingHorizontal: 14, paddingVertical: 7, marginRight: 10, borderWidth: 1 },
+  categoryChipActive: { backgroundColor: '#F59E0B', borderColor: '#F59E0B' },
+  categoryChipText: { fontSize: 13, fontWeight: '500' },
+  recipesContainer: { flex: 1 },
+  recipesGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 16, padding: 24 },
+  recipeCard: { borderRadius: 16, width: isTablet ? (width - 72) / 3 : (width - 64) / 2, shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 2, borderWidth: 1 },
+  recipeImageContainer: { position: 'relative' },
+  recipeImage: { width: '100%', height: 140, borderTopLeftRadius: 15, borderTopRightRadius: 15 },
+  favoriteButton: { position: 'absolute', top: 12, right: 12, backgroundColor: 'rgba(255, 255, 255, 0.9)', borderRadius: 20, padding: 6 },
+  actionButtons: { position: 'absolute', bottom: 8, right: 8, flexDirection: 'row', gap: 8 },
+  actionButton: { backgroundColor: 'rgba(255, 255, 255, 0.9)', borderRadius: 16, padding: 6 },
+  deleteButton: { backgroundColor: '#FEE2E2' },
+  recipeContent: { padding: 12 },
+  recipeName: { fontSize: 14, fontWeight: '600', marginBottom: 4 },
+  recipeCategory: { fontSize: 11, fontWeight: '500', color: '#F59E0B', marginBottom: 8 },
+  recipeDescription: { fontSize: 12, marginBottom: 8, lineHeight: 16, height: 32 },
+  recipeMeta: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8, borderTopWidth: 1, paddingTop: 8 },
+  recipeMetaItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  recipeMetaText: { fontSize: 11 },
+  ingredientsCount: { fontSize: 11, textAlign: 'center', paddingTop: 6, marginTop: 6, borderTopWidth: 1 },
+  emptyState: { alignItems: 'center', justifyContent: 'center', paddingVertical: 48 },
+  emptyStateText: { fontSize: 16, fontWeight: '600', marginBottom: 8 },
+  emptyStateSubtext: { fontSize: 14 },
 });
