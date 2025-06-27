@@ -2,10 +2,22 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Dimensions, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Coffee, Wine, Sparkles, TrendingUp } from 'lucide-react-native';
-import { db } from '@/lib/firebase.native';
+import { db } from '@/lib/firebase';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { router } from 'expo-router';
-import { useTheme } from '@/hooks/useTheme'; // Importerer theme-hooken
+import { useTheme } from '@/hooks/useTheme';
+
+// --- DEBUGGING ---
+// Logger alle miljøvariabler for å finne feilen
+console.log("--- TESTER MILJØVARIABLER ---");
+console.log("API Key:", process.env.EXPO_PUBLIC_API_KEY);
+console.log("Auth Domain:", process.env.EXPO_PUBLIC_AUTH_DOMAIN);
+console.log("Project ID:", process.env.EXPO_PUBLIC_PROJECT_ID);
+console.log("Storage Bucket:", process.env.EXPO_PUBLIC_STORAGE_BUCKET);
+console.log("Messaging Sender ID:", process.env.EXPO_PUBLIC_MESSAGING_SENDER_ID);
+console.log("App ID:", process.env.EXPO_PUBLIC_APP_ID);
+console.log("---------------------------------");
+
 
 const { width } = Dimensions.get('window');
 const isTablet = width >= 768;
@@ -17,10 +29,8 @@ const categoryIcons = {
   Trending: TrendingUp,
 };
 
-// En liten endring for å trigge ny build
-// Har kun én 'export default' på toppnivå
 export default function HomeScreen() {
-  const { colors } = useTheme(); // Henter farger og temastatus
+  const { colors } = useTheme(); 
   const [featuredDrinks, setFeaturedDrinks] = useState([]);
   const [categories, setCategories] = useState([]);
   const [stats, setStats] = useState({ total: 0, popular: 0, new: 0 });
@@ -29,6 +39,11 @@ export default function HomeScreen() {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        if (!db) { // Ekstra sjekk for å gi en klarere feilmelding
+            console.error("Database (db) is not initialized. Check your firebase config and environment variables.");
+            setLoading(false);
+            return;
+        }
         setLoading(true);
         const [categoriesSnapshot, featuredDrinksSnapshot, allDrinksSnapshot] = await Promise.all([
           getDocs(collection(db, 'categories')),
@@ -57,6 +72,7 @@ export default function HomeScreen() {
     };
     fetchData();
   }, []);
+  
 
   // Lager dynamiske stiler som endrer seg med temaet
   const dynamicStyles = StyleSheet.create({
