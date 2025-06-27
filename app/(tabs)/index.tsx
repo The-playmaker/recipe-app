@@ -17,6 +17,7 @@ const categoryIcons = {
   Trending: TrendingUp,
 };
 
+// En liten endring for å trigge ny build
 // Har kun én 'export default' på toppnivå
 export default function HomeScreen() {
   const { colors } = useTheme(); // Henter farger og temastatus
