@@ -14,7 +14,7 @@ const difficulties = ['Easy', 'Medium', 'Hard'];
 
 export default function AddRecipeScreen() {
   const { addRecipe } = useRecipes();
-  const { colors } = useTheme(); // Henter farger for tema
+  const { colors, isDarkMode } = useTheme(); // Henter farger og temastatus
   const [loading, setLoading] = useState(false);
   
   const [formData, setFormData] = useState({
@@ -82,6 +82,7 @@ export default function AddRecipeScreen() {
     }
   };
 
+  // Dynamiske stiler som reagerer på tema
   const dynamicStyles = StyleSheet.create({
       container: { flex: 1, backgroundColor: colors.background },
       header: { borderBottomColor: colors.border },
@@ -96,6 +97,7 @@ export default function AddRecipeScreen() {
       removeButton: { backgroundColor: isDarkMode ? '#5B2121' : '#FEE2E2' },
       stepNumberContainer: { backgroundColor: colors.border },
       stepNumberText: { color: colors.textSecondary },
+      featuredRow: { backgroundColor: colors.card, borderColor: colors.border },
   });
 
   return (
@@ -113,6 +115,10 @@ export default function AddRecipeScreen() {
           <View style={styles.inputGroup}><Text style={[styles.label, dynamicStyles.label]}>Category</Text><ScrollView horizontal showsHorizontalScrollIndicator={false} style={[styles.pickerContainer, dynamicStyles.pickerContainer]}>{categories.map((category) => (<TouchableOpacity key={category} style={[styles.pickerOption, formData.category === category && styles.pickerOptionActive]} onPress={() => setFormData(prev => ({ ...prev, category }))}><Text style={[styles.pickerOptionText, formData.category === category ? dynamicStyles.activePickerOptionText : dynamicStyles.pickerOptionText]}>{category}</Text></TouchableOpacity>))}</ScrollView></View>
           <View style={styles.row}><View style={[styles.inputGroup, { flex: 1, marginRight: 8 }]}><Text style={[styles.label, dynamicStyles.label]}>Difficulty</Text><View style={[styles.pickerContainer, { padding: 4 }, dynamicStyles.pickerContainer]}><View style={styles.difficultyOptions}>{difficulties.map((difficulty) => (<TouchableOpacity key={difficulty} style={[styles.difficultyOption, formData.difficulty === difficulty && styles.difficultyOptionActive]} onPress={() => setFormData(prev => ({ ...prev, difficulty: difficulty as 'Easy' | 'Medium' | 'Hard' }))}><Text style={[styles.difficultyOptionText, formData.difficulty === difficulty ? dynamicStyles.activePickerOptionText : dynamicStyles.pickerOptionText]}>{difficulty}</Text></TouchableOpacity>))}</View></View></View><View style={[styles.inputGroup, { flex: 1, marginLeft: 8 }]}><Text style={[styles.label, dynamicStyles.label]}>Time (minutes)</Text><TextInput style={[styles.input, dynamicStyles.input]} value={formData.time} onChangeText={(text) => setFormData(prev => ({ ...prev, time: text.replace(/[^0-9]/g, '') }))} placeholder="5" placeholderTextColor={colors.textSecondary} keyboardType="numeric" /></View></View>
           <View style={styles.inputGroup}><Text style={[styles.label, dynamicStyles.label]}>Image URL</Text><TextInput style={[styles.input, dynamicStyles.input]} value={formData.image} onChangeText={(text) => setFormData(prev => ({ ...prev, image: text }))} placeholder="https://images.pexels.com/..." placeholderTextColor={colors.textSecondary} /></View>
+          <View style={[styles.featuredRow, dynamicStyles.featuredRow]}>
+            <View style={styles.featuredTextContainer}><Star size={20} color={colors.primary} style={{marginRight: 8}}/><Text style={[styles.label, dynamicStyles.label]}>Feature on Home Screen</Text></View>
+            <Switch trackColor={{ false: "#E5E7EB", true: colors.primary }} thumbColor={"#FFFFFF"} onValueChange={(value) => setFormData(prev => ({ ...prev, featured: value }))} value={formData.featured} />
+          </View>
         </View>
 
         <View style={styles.section}><View style={styles.sectionHeader}><Text style={[styles.sectionTitle, dynamicStyles.sectionTitle]}>Ingredients</Text><TouchableOpacity style={styles.addButton} onPress={addIngredient}><Plus size={20} color={colors.primary} /></TouchableOpacity></View>{formData.ingredients.map((ingredient, index) => (<View key={index} style={styles.listItem}><TextInput style={[styles.input, { flex: 1 }, dynamicStyles.input]} value={ingredient} onChangeText={(text) => updateIngredient(index, text)} placeholder={`Ingredient ${index + 1}`} placeholderTextColor={colors.textSecondary} />{formData.ingredients.length > 1 && (<TouchableOpacity style={[styles.removeButton, dynamicStyles.removeButton]} onPress={() => removeIngredient(index)}><Minus size={20} color="#DC2626" /></TouchableOpacity>)}</View>))}</View>
@@ -146,7 +152,6 @@ const styles = StyleSheet.create({
   difficultyOptions: { flexDirection: 'row' },
   difficultyOption: { flex: 1, paddingVertical: 12, alignItems: 'center', borderRadius: 8, marginHorizontal: 2 },
   difficultyOptionActive: { backgroundColor: '#F59E0B' },
-  difficultyOptionText: { fontSize: 14, fontWeight: '500' },
   listItem: { flexDirection: 'row', alignItems: 'center', marginBottom: 12, gap: 12 },
   stepNumberContainer: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
   stepNumberText: { fontSize: 14, fontWeight: 'bold' },
@@ -156,4 +161,6 @@ const styles = StyleSheet.create({
   saveButtonDisabled: { backgroundColor: '#FBBF24' },
   saveButtonText: { fontSize: 16, fontWeight: '600', color: '#FFFFFF' },
   bottomSpacing: { height: 100 },
+  featuredRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderRadius: 12, padding: 16, borderWidth: 1, marginTop: 8, },
+  featuredTextContainer: { flexDirection: 'row', alignItems: 'center', },
 });
