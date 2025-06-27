@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { db } from '@/lib/firebase';
+import { db } from '@/lib/firebase.native';
 import { collection, getDocs, query, where, orderBy, addDoc, serverTimestamp, updateDoc, doc, deleteDoc } from 'firebase/firestore';
 
 export interface Recipe {

@@ -2,7 +2,7 @@ import { View, Text, StyleSheet, ScrollView, Image, Dimensions, ActivityIndicato
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, Stack, router } from 'expo-router';
 import { useState, useEffect } from 'react';
-import { db } from '@/lib/firebase';
+import { db } from '@/lib/firebase.native';
 import { doc, getDoc } from 'firebase/firestore';
 import { Clock, ChefHat, BarChart3, Edit } from 'lucide-react-native';
 import { Recipe } from '@/hooks/useRecipes';

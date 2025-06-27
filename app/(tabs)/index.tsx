@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Dimensions, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Coffee, Wine, Sparkles, TrendingUp } from 'lucide-react-native';
-import { db } from '@/lib/firebase';
+import { db } from '@/lib/firebase.native';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { router } from 'expo-router';
 import { useTheme } from '@/hooks/useTheme'; // Importerer theme-hooken

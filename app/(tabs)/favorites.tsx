@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import { useFavorites } from '@/hooks/useFavorites';
 import { Recipe } from '@/hooks/useRecipes';
 import { router } from 'expo-router';
-import { db } from '@/lib/firebase';
+import { db } from '@/lib/firebase.native';
 import { collection, query, where, getDocs, documentId } from 'firebase/firestore';
 import { useTheme } from '@/hooks/useTheme'; // Importerer theme-hooken
 
