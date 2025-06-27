@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "drink-app-ba155",
+  "private_key_id": "efbd9271190d2c75b874d1991f9387791f364ce1",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQCjmnVlm+ZkceHv\nQQSrCdB6x7Kcrp/jmsVW9MVK+wACxPWPHC0vCW/ZYdWB+yy0lw2oZGq/Tq/RyGfG\n9mNH2ugWMYG3/57ebbVURw32qdt6oP/W9PC6pFhajO6gh9Imi0swd59Qd2mJRBxm\n8O3NvGlZZQ+A0C5Oj4esfuurwkT4NmcqxTfuJwJ097U0/HpIYF0GvOF492+r89ZE\nlTYDhczHUz3116pqrB/Cg2wKM4rYEK4MqBarJQfZOQgnl6jPs5zpE6o6rylaxJfk\n7VGJO7JfqpR/AyDbDn7MD+w7XAQOD9jOGkjVm0U0wDFUufILKmeGPKjvpEIKlhQG\nOnXkhFMlAgMBAAECggEAH/jV+3LxneyRikerCV/kIbJ4Cd2oenrrGNjB26rcsC3c\njUik3d3awWE4r+utq2cfsKpbICLZAkbHXR8WfNrfY0Luhk5Ktk47UwqFxJAiR79B\n8Diy+M6YQ63qDm4smAK9wW2HMVr8wWoRoN5xorSw49r3oiVM/2ZWTdQJ62mOP/FV\nc7BhYRWqoAyNWJGclmCyav3Raqit2LKwJFVI5kNSBV/Z/SoQtBtH7E6UTSxWp+kl\n7c5bYzts0mOL2ZjWxwIk29+7X/SnmnHAq083mMcqIgZTW96Yog1+QA5cHUW6hnf+\naWT0dVeR9OdmOWqGjZmcpIWLd02qxaFA29YMoW38+wKBgQDhAtCcYIz9affEQbtJ\nvDPf9V+vIMIPm5KJGJSYp95p4mQoC6aZyfmiAz+u0JBAvIPKWmYSnWDFZquIrsjg\n3+vl5kEHKxKzMN5Fg9EKbP948vAypyjVTT7+lkKP5tzX7EqnwQLEN6WyKNKZRDAt\nE3hT3qX3lSIlLJ/Ri+pEB8jZHwKBgQC6Ipob+oRUBbq0MYJO8KEVla6KdBH8YoVx\nh7haNNeaNT1K4ipPwd48J1+hckWZCVCgwacz4ku9NZIzTb072g3vt6o+4sv+F5A1\nwT8USkh1fFmIAcTgrHCpC5Wwm6iAkYjPM2HRRCQuXbkaKX0RRTT3GUSuW7wglDRk\nvGV5FLeXOwKBgH8Pp92mZ/dyL4eT1r78mA6P8UhjpzJJF6ZzSvYpVV9ViFlUuu99\nLopea0e8Xrkvuvw5sAoy9MKEB7lXefgCeqOIMpBpslWd8uYuWY0Zn+ocxabU3ioV\nRM1e7Jd2Np93v3CbfYRwKBFDHCmQZ+QMapZx1CbLAE0dteIOsGtaOgDhAoGBAKEl\nB8qlLh8X/rW2DxyMksj/F2biahfYq7LIT0A5c1ccNH46I2t9agsmA1LgfYSqXdVv\nEnSGvA+I65Pi/6trcplQpuFetEC84arILPZCAU1FZLWs4meooriXQPbvLAhy9sB7\nuXnUxoYlufT+ajqjceFjTOSuosaJyHpV6HvVBcS1AoGBAMZ+u7an28BkBOYC+PQT\nN+VZap8choQ0qZx1XtuCpASN0MUicw+IXzZBg5FWU0+psBBlvFCSMQ4kR+uOqWyC\njR/Ca/dfdZ4WJUWfzLZAS5xHOuYISX5EvAdJVaK22bs1D8qJjlPXc+5MAbaEFCti\nfWaHzAhfNHfEuIBfG6Vi+g60\n-----END PRIVATE KEY-----\n",
+  "client_email": "sheets-writer@drink-app-ba155.iam.gserviceaccount.com",
+  "client_id": "105347183065772899091",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/sheets-writer%40drink-app-ba155.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}

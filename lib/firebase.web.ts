@@ -1,8 +1,8 @@
+// Fil: lib/firebase.web.ts
 import { initializeApp, getApps, getApp, getFirestore } from 'firebase/app';
 
-// Denne konfigurasjonen leser fra miljøvariabler
-const firebaseConfig = {
-   apiKey: "AIzaSyCO8gm2fO5mtTVnEPp4lhoQTFNRNf1mqPY",
+  const firebaseConfig = {
+  apiKey: "AIzaSyCO8gm2fO5mtTVnEPp4lhoQTFNRNf1mqPY",
   authDomain: "drink-app-ba155.firebaseapp.com",
   projectId: "drink-app-ba155",
   storageBucket: "drink-app-ba155.firebasestorage.app",
@@ -12,17 +12,10 @@ const firebaseConfig = {
 };
 
 let firestoreInstance;
-
-const areVarsDefined = firebaseConfig.apiKey && firebaseConfig.projectId;
-
-if (areVarsDefined) {
-  // Initialiserer kun for web
+if (firebaseConfig.apiKey) {
   const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
   firestoreInstance = getFirestore(app);
 } else {
-  // Gir en advarsel hvis nøklene mangler. Dette er nyttig for feilsøking.
-  console.warn("Firebase web config is missing in environment variables. Web features may not work.");
+  console.warn("Firebase web config missing.");
 }
-
-// Eksporterer databasen for bruk i appen
 export const db = firestoreInstance;

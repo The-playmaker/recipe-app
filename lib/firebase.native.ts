@@ -1,14 +1,10 @@
-// Denne filen er kun for Android og iOS.
-// Den vil ikke bli inkludert i web-bygget.
+// Fil: lib/firebase.native.ts
+// Innholdet er midlertidig deaktivert for å tillate web-bygging.
+// For å bygge for mobil senere, må du installere @react-native-firebase/*
+// og fjerne kommentar-tegnene under.
 
-// For at denne skal fungere, må pakkene være installert.
-// Kjør: npm install @react-native-firebase/app @react-native-firebase/firestore
+// import firestore from '@react-native-firebase/firestore';
+// const firestoreInstance = firestore();
+// export const db = firestoreInstance;
 
-// KORRIGERT: Koden er nå aktivert igjen for native.
-import firestore from '@react-native-firebase/firestore';
-
-// For native, initialiseres Firebase automatisk via google-services.json.
-const firestoreInstance = firestore();
-
-// Eksporterer den ekte database-instansen for mobil.
-export const db = firestoreInstance;
+export const db = null; // Eksporterer null for å unngå feil
