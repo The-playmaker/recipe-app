@@ -134,17 +134,19 @@ export default function RecipesScreen() {
 const styles = StyleSheet.create({
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   errorContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 24 },
-  header: { padding: 24, paddingTop: 16, borderBottomWidth: 1 },
+  // KORRIGERT: Redusert vertikal padding
+  header: { paddingHorizontal: 24, paddingTop: 16, paddingBottom: 16, borderBottomWidth: 1 },
   title: { fontSize: isTablet ? 32 : 28, fontWeight: 'bold', marginBottom: 4 },
   subtitle: { fontSize: isTablet ? 18 : 16 },
-  searchContainer: { flexDirection: 'row', paddingHorizontal: 24, paddingVertical: 16, gap: 12 },
+  // KORRIGERT: Redusert vertikal padding
+  searchContainer: { flexDirection: 'row', paddingHorizontal: 24, paddingVertical: 12, gap: 12 },
   searchBar: { flex: 1, flexDirection: 'row', alignItems: 'center', borderRadius: 12, paddingHorizontal: 16, gap: 12, borderWidth: 1 },
   searchInput: { flex: 1, fontSize: 14, paddingVertical: 10 },
-  categoriesContainer: { paddingHorizontal: 24, paddingBottom: 16, borderBottomWidth: 1, flexGrow: 0, alignItems: 'center' },
-  // KORRIGERT: Bruker nå en fast høyde for å tvinge knappene til å bli lavere
+  // KORRIGERT: Redusert vertikal padding
+  categoriesContainer: { paddingHorizontal: 24, paddingBottom: 12, borderBottomWidth: 1, flexGrow: 0, alignItems: 'center' },
   categoryChip: { 
-    height: 32, // Setter en fast, lavere høyde
-    borderRadius: 16, // Halvparten av høyden for perfekt runding
+    height: 32, 
+    borderRadius: 16,
     paddingHorizontal: 14, 
     marginRight: 8, 
     borderWidth: 1,
@@ -157,8 +159,9 @@ const styles = StyleSheet.create({
     fontWeight: '500' 
   },
   recipesContainer: { flex: 1 },
-  recipesGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 16, padding: 24 },
-  recipeCard: { borderRadius: 16, width: isTablet ? (width - 72) / 3 : (width - 64) / 2, shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 2, borderWidth: 1 },
+  // KORRIGERT: Redusert padding
+  recipesGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 16, padding: 16 },
+  recipeCard: { borderRadius: 16, width: isTablet ? (width - 64) / 3 : (width - 48) / 2, shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 2, borderWidth: 1 },
   recipeImageContainer: { position: 'relative' },
   recipeImage: { width: '100%', height: 140, borderTopLeftRadius: 15, borderTopRightRadius: 15 },
   favoriteButton: { position: 'absolute', top: 12, right: 12, backgroundColor: 'rgba(255, 255, 255, 0.9)', borderRadius: 20, padding: 6 },
