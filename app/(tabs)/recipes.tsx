@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import { useRecipes, Recipe } from '@/hooks/useRecipes';
 import { useFavorites } from '@/hooks/useFavorites';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useTheme } from '@/hooks/useTheme'; // Importerer theme-hooken
+import { useTheme } from '@/hooks/useTheme';
 
 const { width } = Dimensions.get('window');
 const isTablet = width >= 768;
@@ -13,7 +13,7 @@ const isTablet = width >= 768;
 const categories = ['All', 'Cocktail', 'Mocktail', 'Coffee', 'Coffee Cocktail', 'Beer', 'Wine', 'Spirits', 'Hot Drinks'];
 
 export default function RecipesScreen() {
-  const { colors } = useTheme(); // Henter farger for Dark Mode
+  const { colors } = useTheme();
   const { category: initialCategory } = useLocalSearchParams<{ category: string }>();
   const { recipes, loading, error, deleteRecipe, fetchRecipes } = useRecipes();
   const { favorites, toggleFavorite, loading: favoritesLoading } = useFavorites();
@@ -41,7 +41,6 @@ export default function RecipesScreen() {
     Alert.alert('Delete Recipe', `Are you sure you want to delete "${recipeName}"?`, [{ text: 'Cancel', style: 'cancel' }, { text: 'Delete', style: 'destructive', onPress: () => deleteRecipe(recipeId) }]);
   };
 
-  // Lager dynamiske stiler som endrer seg med temaet
   const dynamicStyles = StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.background },
     loadingText: { color: colors.textSecondary },
@@ -94,14 +93,12 @@ export default function RecipesScreen() {
         <Text style={[styles.title, dynamicStyles.title]}>Recipe Collection</Text>
         <Text style={[styles.subtitle, dynamicStyles.subtitle]}>{filteredRecipes.length} recipes available</Text>
       </View>
-
       <View style={styles.searchContainer}>
         <View style={[styles.searchBar, dynamicStyles.searchBar]}>
           <Search size={20} color={colors.textSecondary} />
           <TextInput style={[styles.searchInput, dynamicStyles.searchInput]} placeholder="Search recipes or ingredients..." value={searchQuery} onChangeText={setSearchQuery} placeholderTextColor={colors.textSecondary} />
         </View>
       </View>
-
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={[styles.categoriesContainer, dynamicStyles.categoriesContainer]}>
         {categories.map((category) => (
           <TouchableOpacity key={category} style={[styles.categoryChip, dynamicStyles.categoryChip, selectedCategory === category && styles.categoryChipActive]} onPress={() => setSelectedCategory(category)}>
@@ -109,7 +106,6 @@ export default function RecipesScreen() {
           </TouchableOpacity>
         ))}
       </ScrollView>
-
       <ScrollView style={styles.recipesContainer} showsVerticalScrollIndicator={false}>
         <View style={styles.recipesGrid}>
           {filteredRecipes.map((recipe) => (
@@ -129,16 +125,12 @@ export default function RecipesScreen() {
             </TouchableOpacity>
           ))}
         </View>
-        
-        {filteredRecipes.length === 0 && !loading && (
-          <View style={styles.emptyState}><Text style={[styles.emptyStateText, dynamicStyles.emptyStateText]}>No recipes found</Text><Text style={[styles.emptyStateSubtext, dynamicStyles.emptyStateSubtext]}>Try adjusting your filters.</Text></View>
-        )}
+        {filteredRecipes.length === 0 && !loading && ( <View style={styles.emptyState}><Text style={[styles.emptyStateText, dynamicStyles.emptyStateText]}>No recipes found</Text><Text style={[styles.emptyStateSubtext, dynamicStyles.emptyStateSubtext]}>Try adjusting your filters.</Text></View> )}
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-// Generelle stiler som ikke avhenger av tema
 const styles = StyleSheet.create({
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   errorContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 24 },
@@ -148,17 +140,20 @@ const styles = StyleSheet.create({
   searchContainer: { flexDirection: 'row', paddingHorizontal: 24, paddingVertical: 16, gap: 12 },
   searchBar: { flex: 1, flexDirection: 'row', alignItems: 'center', borderRadius: 12, paddingHorizontal: 16, gap: 12, borderWidth: 1 },
   searchInput: { flex: 1, fontSize: 14, paddingVertical: 10 },
-  categoriesContainer: { paddingHorizontal: 24, paddingBottom: 16, borderBottomWidth: 1, flexGrow: 0 },
+  categoriesContainer: { paddingHorizontal: 24, paddingBottom: 16, borderBottomWidth: 1, flexGrow: 0, alignItems: 'center' },
+  // KORRIGERT: Bruker nå en fast høyde for å tvinge knappene til å bli lavere
   categoryChip: { 
-    borderRadius: 20, 
-    paddingHorizontal: 12, // Endret fra 14
-    paddingVertical: 6,    // Endret fra 7
-    marginRight: 8,        // Endret fra 10
-    borderWidth: 1 
+    height: 32, // Setter en fast, lavere høyde
+    borderRadius: 16, // Halvparten av høyden for perfekt runding
+    paddingHorizontal: 14, 
+    marginRight: 8, 
+    borderWidth: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   categoryChipActive: { backgroundColor: '#F59E0B', borderColor: '#F59E0B' },
   categoryChipText: { 
-    fontSize: 12,          // Endret fra 13
+    fontSize: 13, 
     fontWeight: '500' 
   },
   recipesContainer: { flex: 1 },
