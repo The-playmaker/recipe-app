@@ -1,32 +1,41 @@
 // Fil: lib/firebase.web.ts
-import { initializeApp, getApps, getApp } from 'firebase/app';
-// KORRIGERT: Importerer getFirestore fra sin egen, riktige pakke
-import { getFirestore } from 'firebase/firestore';
+import { initializeApp, getApp, getApps, FirebaseOptions } from 'firebase/app';
+import { getFirestore, Firestore } from 'firebase/firestore';
 
-// Denne konfigurasjonen leser fra miljøvariabler
-const firebaseConfig = {
-apiKey: "AIzaSyCO8gm2fO5mtTVnEPp4lhoQTFNRNf1mqPY",
-  authDomain: "drink-app-ba155.firebaseapp.com",
-  projectId: "drink-app-ba155",
-  storageBucket: "drink-app-ba155.firebasestorage.app",
-  messagingSenderId: "343885415965",
-  appId: "1:343885415965:web:9190fa6786568d7795e8f4",
-  measurementId: "G-9M1RLVSTW0"
+const firebaseConfig: FirebaseOptions = {
+    apiKey: process.env.EXPO_PUBLIC_API_KEY,
+    authDomain: process.env.EXPO_PUBLIC_AUTH_DOMAIN,
+    projectId: process.env.EXPO_PUBLIC_PROJECT_ID,
+    storageBucket: process.env.EXPO_PUBLIC_STORAGE_BUCKET,
+    messagingSenderId: process.env.EXPO_PUBLIC_MESSAGING_SENDER_ID,
+    appId: process.env.EXPO_PUBLIC_APP_ID,
 };
 
-let firestoreInstance;
-
-const areVarsDefined = firebaseConfig.apiKey && firebaseConfig.projectId;
-
-if (areVarsDefined) {
-  // Initialiserer appen som før
-  const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-  // Henter Firestore-instansen med den riktige, importerte funksjonen
-  firestoreInstance = getFirestore(app);
-} else {
-  // Gir en advarsel hvis nøklene mangler
-  console.warn("Firebase web config is missing in environment variables. Web features may not work.");
+// En funksjon som initialiserer og returnerer databasen.
+// Dette unngår timing-problemer med 'export'.
+function initializeDb(): Firestore | null {
+    try {
+        if (firebaseConfig.apiKey && firebaseConfig.projectId) {
+            const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+            return getFirestore(app);
+        } else {
+            console.error("CRITICAL ERROR: Firebase config is missing from environment variables.");
+            return null;
+        }
+    } catch (error) {
+        console.error("CRITICAL ERROR initializing Firebase:", error);
+        return null;
+    }
 }
 
-// Eksporterer databasen for bruk i appen
-export const db = firestoreInstance;
+// Vi kaller funksjonen én gang og eksporterer resultatet.
+const db = initializeDb();
+
+// Gir en tydelig loggmelding om suksess eller fiasko.
+if (db) {
+    console.log("SUCCESS: Firebase for web initialized and ready.");
+} else {
+    console.error("FAILURE: Database object ('db') could not be initialized.");
+}
+
+export { db };

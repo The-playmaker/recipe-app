@@ -12,7 +12,6 @@ const isTablet = width >= 768;
 
 const categories = ['All', 'Cocktail', 'Mocktail', 'Coffee', 'Coffee Cocktail', 'Beer', 'Wine', 'Spirits', 'Hot Drinks'];
 
-// Har kun én 'export default' på toppnivå
 export default function RecipesScreen() {
   const { colors } = useTheme(); // Henter farger for Dark Mode
   const { category: initialCategory } = useLocalSearchParams<{ category: string }>();
@@ -150,9 +149,18 @@ const styles = StyleSheet.create({
   searchBar: { flex: 1, flexDirection: 'row', alignItems: 'center', borderRadius: 12, paddingHorizontal: 16, gap: 12, borderWidth: 1 },
   searchInput: { flex: 1, fontSize: 14, paddingVertical: 10 },
   categoriesContainer: { paddingHorizontal: 24, paddingBottom: 16, borderBottomWidth: 1, flexGrow: 0 },
-  categoryChip: { borderRadius: 20, paddingHorizontal: 14, paddingVertical: 7, marginRight: 10, borderWidth: 1 },
+  categoryChip: { 
+    borderRadius: 20, 
+    paddingHorizontal: 12, // Endret fra 14
+    paddingVertical: 6,    // Endret fra 7
+    marginRight: 8,        // Endret fra 10
+    borderWidth: 1 
+  },
   categoryChipActive: { backgroundColor: '#F59E0B', borderColor: '#F59E0B' },
-  categoryChipText: { fontSize: 13, fontWeight: '500' },
+  categoryChipText: { 
+    fontSize: 12,          // Endret fra 13
+    fontWeight: '500' 
+  },
   recipesContainer: { flex: 1 },
   recipesGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 16, padding: 24 },
   recipeCard: { borderRadius: 16, width: isTablet ? (width - 72) / 3 : (width - 64) / 2, shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 2, borderWidth: 1 },
