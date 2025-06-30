@@ -79,13 +79,45 @@ export function useRecipes() {
   };
 
   const updateRecipe = async (id: string, updates: Partial<OmitId<Recipe>>) => {
-     if (!db) throw new Error("Database not connected.");
-     // ... resten av funksjonen ...
+    if (!db) {
+      console.error("Cannot update recipe, DB not connected.");
+      throw new Error("Database not connected.");
+    }
+    try {
+      const recipeRef = doc(db, 'drinks', id);
+      await updateDoc(recipeRef, { ...updates, updatedAt: serverTimestamp() });
+      // Optionally, call fetchRecipes() or update local state directly
+      // For simplicity and to ensure data consistency, we'll refetch.
+      await fetchRecipes(); // Refetch all recipes or the specific category if needed
+      // If you want to update local state directly for performance:
+      // setRecipes(prevRecipes =>
+      //   prevRecipes.map(recipe =>
+      //     recipe.id === id ? { ...recipe, ...updates, updatedAt: new Date() } : recipe
+      //   )
+      // );
+    } catch (err) {
+      console.error("updateRecipe error:", err);
+      throw err; // Re-throw the error to be caught by the calling component
+    }
   };
   
   const deleteRecipe = async (id: string) => {
-    if (!db) throw new Error("Database not connected.");
-    // ... resten av funksjonen ...
+    if (!db) {
+      console.error("Cannot delete recipe, DB not connected.");
+      throw new Error("Database not connected.");
+    }
+    try {
+      const recipeRef = doc(db, 'drinks', id);
+      await deleteDoc(recipeRef);
+      // Optionally, call fetchRecipes() or update local state directly
+      // For simplicity and to ensure data consistency, we'll refetch.
+      await fetchRecipes(); // Refetch all recipes or the specific category if needed
+      // If you want to update local state directly for performance:
+      // setRecipes(prevRecipes => prevRecipes.filter(recipe => recipe.id !== id));
+    } catch (err) {
+      console.error("deleteRecipe error:", err);
+      throw err; // Re-throw the error to be caught by the calling component
+    }
   };
 
   return {
