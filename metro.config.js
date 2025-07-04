@@ -1,53 +1,53 @@
 // Learn more https://docs.expo.dev/guides/customizing-metro
 const { getDefaultConfig } = require('expo/metro-config');
-const path = require('path');
+// const path = require('path'); // No longer needed for this simplified version
 
 /** @type {import('expo/metro-config').MetroConfig} */
 const defaultConfig = getDefaultConfig(__dirname);
 
 // Get the current platform from an environment variable set by Expo CLI
-const platform = process.env.EXPO_PLATFORM || process.env.PLATFORM;
+// const platform = process.env.EXPO_PLATFORM || process.env.PLATFORM;
 
-// Mock out @react-native-firebase modules for web by pointing them to an empty module or false
-if (platform === 'web') {
-  const rnFirebaseMockPath = path.resolve(__dirname, 'empty-module.js');
+// Temporarily disabling web-specific mocks to isolate the issue.
+// If all imports are correct (using the '@/lib/firebase' barrel file),
+// lib/firebase.native.ts and its @react-native-firebase/* imports
+// should not be pulled into the web bundle anyway.
 
-  // Create an empty module file if it doesn't exist (Metro needs a valid file path)
-  const fs = require('fs');
-  if (!fs.existsSync(rnFirebaseMockPath)) {
-    fs.writeFileSync(rnFirebaseMockPath, 'module.exports = {};');
-  }
+// if (platform === 'web') {
+//   const rnFirebaseMockPath = path.resolve(__dirname, 'firebase-native-web-mock.js');
 
-  const firebaseModulesToMock = [
-    '@react-native-firebase/app',
-    '@react-native-firebase/auth',
-    '@react-native-firebase/firestore',
-    // Add any other @react-native-firebase/* modules your app might indirectly reference
-  ];
+//   const fs = require('fs');
+//   if (!fs.existsSync(rnFirebaseMockPath)) {
+//     fs.writeFileSync(rnFirebaseMockPath, `
+//       const handler = {
+//         get: function(target, prop) {
+//           if (prop === 'apps') return [];
+//           if (prop === 'app') return () => ({ auth: () => null, firestore: () => null });
+//           if (prop === 'auth') return () => null;
+//           if (prop === 'firestore') return () => null;
+//           return null;
+//         },
+//         apply: function() { return null; }
+//       };
+//       module.exports = new Proxy({}, handler);
+//     `);
+//   }
 
-  // Method 1: Using resolver.extraNodeModules to substitute the modules
-  // This is often more reliable for complete module replacement.
-  defaultConfig.resolver = defaultConfig.resolver || {};
-  defaultConfig.resolver.extraNodeModules = defaultConfig.resolver.extraNodeModules || {};
+//   const firebaseModulesToMock = [
+//     '@react-native-firebase/app',
+//     '@react-native-firebase/auth',
+//     '@react-native-firebase/firestore',
+//   ];
 
-  for (const moduleName of firebaseModulesToMock) {
-    defaultConfig.resolver.extraNodeModules[moduleName] = rnFirebaseMockPath;
-  }
+//   defaultConfig.resolver = defaultConfig.resolver || {};
+//   defaultConfig.resolver.extraNodeModules = defaultConfig.resolver.extraNodeModules || {};
 
-  // Method 2: Using resolver.resolveRequest (more complex, usually for conditional resolution)
-  // We'll stick with extraNodeModules for this case as it's simpler for direct mocking.
-  // defaultConfig.resolver.resolveRequest = (context, moduleName, platformInternal) => {
-  //   if (platformInternal === 'web' && firebaseModulesToMock.includes(moduleName)) {
-  //     return {
-  //       filePath: rnFirebaseMockPath, // Point to an empty module
-  //       type: 'sourceFile',
-  //     };
-  //   }
-  //   // Allow Metro to resolve anything else normally
-  //   return context.resolveRequest(context, moduleName, platformInternal);
-  // };
+//   for (const moduleName of firebaseModulesToMock) {
+//     defaultConfig.resolver.extraNodeModules[moduleName] = rnFirebaseMockPath;
+//   }
+//   console.log('INFO: Metro config for WEB: Mocking @react-native-firebase modules (temporarily simplified/disabled for testing).');
+// }
 
-  console.log('INFO: Metro config customized for WEB: Mocking @react-native-firebase modules.');
-}
+console.log('INFO: Metro config is using default settings (web mocks temporarily disabled for testing).');
 
 module.exports = defaultConfig;

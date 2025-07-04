@@ -4,7 +4,7 @@ import { Bell, Palette, Download, Info, CircleHelp as HelpCircle, ChevronRight }
 import { useRecipes } from '@/hooks/useRecipes'; 
 import { useFavorites } from '@/hooks/useFavorites';
 import { useTheme } from '@/hooks/useTheme'; // Importerer theme-hooken
-import { db } from '@/lib/firebase.native';
+import { db } from '@/lib/firebase'; // Changed from firebase.native
 import { collection, getDocs } from 'firebase/firestore';
 import { useState, useEffect } from 'react';
 
