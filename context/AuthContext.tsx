@@ -60,12 +60,27 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, []);
 
   const login = async (email, password) => {
-    if (!authInstance) {
-      throw new Error("Firebase Auth service is not available.");
+    console.log("AuthContext: Attempting login. authInstance:", authInstance); // DEBUG LOG
+    if (authInstance && typeof authInstance.signInWithEmailAndPassword === 'function') {
+      console.log("AuthContext: authInstance.signInWithEmailAndPassword IS a function."); // DEBUG LOG
+    } else {
+      console.error("AuthContext: authInstance.signInWithEmailAndPassword IS NOT a function or authInstance is invalid."); // DEBUG LOG
+      if (authInstance) {
+        console.log("AuthContext: authInstance properties:", Object.keys(authInstance)); // DEBUG LOG
+      } else {
+        console.log("AuthContext: authInstance is null or undefined."); // DEBUG LOG
+      }
+      throw new Error("Firebase Auth service is not correctly configured or signInWithEmailAndPassword method is missing.");
     }
+
     setLoading(true);
     setError(null);
     try {
+      // Ensure authInstance is not null before using it, though the check above should handle it.
+      // This is more of a TypeScript guard if authInstance could be null here.
+      if (!authInstance) {
+        throw new Error("Firebase Auth service became unavailable unexpectedly.");
+      }
       await authInstance.signInWithEmailAndPassword(email, password);
       // onAuthStateChanged will handle setting the currentUser
     } catch (e) {
