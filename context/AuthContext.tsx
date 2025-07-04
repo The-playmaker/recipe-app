@@ -1,9 +1,18 @@
 import React, { createContext, useState, useEffect, useContext, ReactNode } from 'react';
-import { authInstance } from '@/lib/firebase.native'; // Use native Firebase auth
-import { FirebaseAuthTypes } from '@react-native-firebase/auth';
+import { authInstance } from '@/lib/firebase'; // Now imports from the barrel file
+import { User as FirebaseUser } from 'firebase/auth'; // Web SDK User type
+import { FirebaseAuthTypes } from '@react-native-firebase/auth'; // Native SDK User type (for potential type union or checking)
+import { Platform } from 'react-native';
+
+// Define a unified User type or use 'any' if structures are too different and not cross-assigned.
+// For simplicity here, we'll assume the core User properties we care about are similar enough,
+// or that authInstance will be typed correctly by the platform-specific import.
+// A more robust solution might involve a type adapter if properties differ significantly.
+type AppUser = FirebaseUser | FirebaseAuthTypes.User | null;
+
 
 interface AuthContextType {
-  currentUser: FirebaseAuthTypes.User | null;
+  currentUser: AppUser;
   loading: boolean;
   error: Error | null;
   login: (email, password) => Promise<void>;
@@ -27,7 +36,7 @@ interface AuthProviderProps {
 }
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const [currentUser, setCurrentUser] = useState<FirebaseAuthTypes.User | null>(null);
+  const [currentUser, setCurrentUser] = useState<AppUser>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 

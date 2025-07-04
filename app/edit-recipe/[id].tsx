@@ -4,7 +4,7 @@ import { Plus, Minus, Save, Star } from 'lucide-react-native';
 import { useState, useEffect } from 'react';
 import { useRecipes, Recipe } from '@/hooks/useRecipes';
 import { router, useLocalSearchParams, Stack } from 'expo-router';
-import { db } from '@/lib/firebase.native';
+import { db } from '@/lib/firebase'; // Changed from firebase.native
 import { doc, getDoc } from 'firebase/firestore';
 
 const { width } = Dimensions.get('window');
