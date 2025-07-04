@@ -24,9 +24,23 @@ try {
 
 export const db = dbInstance;
 
+// Initialize and export Firebase Auth
+import auth, { FirebaseAuthTypes } from '@react-native-firebase/auth';
+
+let authInstanceExport: FirebaseAuthTypes.Module;
+
+try {
+  authInstanceExport = auth();
+  console.log("SUCCESS: @react-native-firebase/auth initialized.");
+} catch (error) {
+  console.error("CRITICAL ERROR initializing @react-native-firebase/auth:", error);
+  authInstanceExport = null as any; // Cast to allow assignment, indicates failure.
+  console.error("FAILURE: auth object for native could not be initialized. Authentication will not work.");
+}
+
+export const authInstance = authInstanceExport;
+
+
 // You might also export other Firebase services if you use them:
-// import auth from '@react-native-firebase/auth';
-// export const authInstance = auth();
-//
 // import functions from '@react-native-firebase/functions';
 // export const functionsInstance = functions();

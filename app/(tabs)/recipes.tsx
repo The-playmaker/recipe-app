@@ -1,11 +1,12 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, TextInput, Dimensions, Alert, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Search, Clock, ChefHat, Heart, CreditCard as Edit, Trash2 } from 'lucide-react-native';
+import { Search, Clock, ChefHat, Heart, CreditCard as Edit, Trash2, LogOut } from 'lucide-react-native'; // Added LogOut
 import { useState, useEffect } from 'react';
 import { useRecipes, Recipe } from '@/hooks/useRecipes';
 import { useFavorites } from '@/hooks/useFavorites';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useTheme } from '@/hooks/useTheme';
+import { useAuth } from '@/context/AuthContext'; // Added useAuth
 
 const { width } = Dimensions.get('window');
 const isTablet = width >= 768;
@@ -14,6 +15,7 @@ const categories = ['All', 'Cocktail', 'Mocktail', 'Coffee', 'Coffee Cocktail', 
 
 export default function RecipesScreen() {
   const { colors } = useTheme();
+  const { logout, currentUser } = useAuth(); // Added useAuth
   const { category: initialCategory } = useLocalSearchParams<{ category: string }>();
   const { recipes, loading, error, deleteRecipe, fetchRecipes } = useRecipes();
   const { favorites, toggleFavorite, loading: favoritesLoading } = useFavorites();
@@ -90,8 +92,15 @@ export default function RecipesScreen() {
   return (
     <SafeAreaView style={dynamicStyles.container}>
       <View style={[styles.header, dynamicStyles.header]}>
-        <Text style={[styles.title, dynamicStyles.title]}>Recipe Collection</Text>
-        <Text style={[styles.subtitle, dynamicStyles.subtitle]}>{filteredRecipes.length} recipes available</Text>
+        <View>
+          <Text style={[styles.title, dynamicStyles.title]}>Recipe Collection</Text>
+          <Text style={[styles.subtitle, dynamicStyles.subtitle]}>{filteredRecipes.length} recipes available</Text>
+        </View>
+        {currentUser && (
+          <TouchableOpacity onPress={logout} style={styles.logoutButton}>
+            <LogOut size={24} color={colors.primary} />
+          </TouchableOpacity>
+        )}
       </View>
       <View style={styles.searchContainer}>
         <View style={[styles.searchBar, dynamicStyles.searchBar]}>
@@ -135,9 +144,22 @@ const styles = StyleSheet.create({
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   errorContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 24 },
   // KORRIGERT: Redusert vertikal padding
-  header: { paddingHorizontal: 24, paddingTop: 16, paddingBottom: 16, borderBottomWidth: 1 },
+  header: {
+    paddingHorizontal: 24,
+    paddingTop: 16,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    flexDirection: 'row', // Added for logout button
+    justifyContent: 'space-between', // Added for logout button
+    alignItems: 'center' // Added for logout button
+  },
   title: { fontSize: isTablet ? 32 : 28, fontWeight: 'bold', marginBottom: 4 },
   subtitle: { fontSize: isTablet ? 18 : 16 },
+  logoutButton: { // Added for logout button
+    padding: 8,
+    borderRadius: 20,
+    // backgroundColor: '#FFFBEB' // Example background, adjust with theme if needed
+  },
   // KORRIGERT: Redusert vertikal padding
   searchContainer: { flexDirection: 'row', paddingHorizontal: 24, paddingVertical: 12, gap: 12 },
   searchBar: { flex: 1, flexDirection: 'row', alignItems: 'center', borderRadius: 12, paddingHorizontal: 16, gap: 12, borderWidth: 1 },
