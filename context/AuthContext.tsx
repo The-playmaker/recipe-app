@@ -1,139 +1,78 @@
 import React, { createContext, useState, useEffect, useContext, ReactNode } from 'react';
-import { authInstance } from '@/lib/firebase'; // Now imports from the barrel file
-import { User as FirebaseUser } from 'firebase/auth'; // Web SDK User type
-import { FirebaseAuthTypes } from '@react-native-firebase/auth'; // Native SDK User type (for potential type union or checking)
-import { Platform } from 'react-native';
+import { auth } from '@/lib/firebase'; // Importerer auth-instansen vi lagde
+import { 
+  User, 
+  onAuthStateChanged, 
+  signInWithEmailAndPassword, 
+  signOut 
+} from 'firebase/auth';
 
-// Define a unified User type or use 'any' if structures are too different and not cross-assigned.
-// For simplicity here, we'll assume the core User properties we care about are similar enough,
-// or that authInstance will be typed correctly by the platform-specific import.
-// A more robust solution might involve a type adapter if properties differ significantly.
-type AppUser = FirebaseUser | FirebaseAuthTypes.User | null;
-
-
+// Definerer hva AuthContext skal inneholde
 interface AuthContextType {
-  currentUser: AppUser;
+  currentUser: User | null; // KORRIGERT: Endret navn fra 'user' til 'currentUser'
   loading: boolean;
-  error: Error | null;
   login: (email, password) => Promise<void>;
   logout: () => Promise<void>;
-  // We can add signUp here later if needed
-  // signUp: (email, password) => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+// Oppretter konteksten med en standardverdi
+export const AuthContext = createContext<AuthContextType>({
+  currentUser: null,
+  loading: true,
+  login: async () => {},
+  logout: async () => {},
+});
 
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-};
-
-interface AuthProviderProps {
-  children: ReactNode;
-}
-
-export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const [currentUser, setCurrentUser] = useState<AppUser>(null);
+// Dette er "Provider"-komponenten som vil omkranse hele appen
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
+  const [currentUser, setCurrentUser] = useState<User | null>(null); // KORRIGERT: Endret navn på state-variabel
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
 
+  // Denne effekten kjører én gang og setter opp en lytter
+  // som sjekker om brukerens innloggingsstatus endrer seg.
   useEffect(() => {
-    if (!authInstance) {
-      console.error("Auth instance not available in AuthProvider. Firebase might not be initialized correctly.");
-      setLoading(false);
-      setError(new Error("Firebase Auth service is not available."));
-      return;
+    if (!auth) {
+        console.warn("Auth instance is not available. Skipping auth state listener.");
+        setLoading(false);
+        return;
     }
 
-    // Listen for authentication state changes
-    const unsubscribe = authInstance.onAuthStateChanged(user => {
-      setCurrentUser(user);
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setCurrentUser(user); // KORRIGERT: Oppdaterer riktig state
       setLoading(false);
-      setError(null); // Clear any previous errors on auth state change
     });
 
-    // Cleanup subscription on unmount
-    return unsubscribe;
+    // Renser opp lytteren når komponenten forsvinner
+    return () => unsubscribe();
   }, []);
 
+  // Innloggingsfunksjon med korrekt, moderne syntaks
   const login = async (email, password) => {
-    console.log("AuthContext: Attempting login. authInstance:", authInstance); // DEBUG LOG
-    if (authInstance && typeof authInstance.signInWithEmailAndPassword === 'function') {
-      console.log("AuthContext: authInstance.signInWithEmailAndPassword IS a function."); // DEBUG LOG
-    } else {
-      console.error("AuthContext: authInstance.signInWithEmailAndPassword IS NOT a function or authInstance is invalid."); // DEBUG LOG
-      if (authInstance) {
-        console.log("AuthContext: authInstance properties:", Object.keys(authInstance)); // DEBUG LOG
-      } else {
-        console.log("AuthContext: authInstance is null or undefined."); // DEBUG LOG
-      }
-      throw new Error("Firebase Auth service is not correctly configured or signInWithEmailAndPassword method is missing.");
+    if (!auth) {
+        throw new Error("Auth service is not initialized.");
     }
-
-    setLoading(true);
-    setError(null);
-    try {
-      // Ensure authInstance is not null before using it, though the check above should handle it.
-      // This is more of a TypeScript guard if authInstance could be null here.
-      if (!authInstance) {
-        throw new Error("Firebase Auth service became unavailable unexpectedly.");
-      }
-      await authInstance.signInWithEmailAndPassword(email, password);
-      // onAuthStateChanged will handle setting the currentUser
-    } catch (e) {
-      setError(e as Error);
-      throw e; // Re-throw to be caught by the caller if needed
-    } finally {
-      setLoading(false);
-    }
+    await signInWithEmailAndPassword(auth, email, password);
   };
 
+  // Utloggingsfunksjon
   const logout = async () => {
-    if (!authInstance) {
-      throw new Error("Firebase Auth service is not available.");
+    if (!auth) {
+        throw new Error("Auth service is not initialized.");
     }
-    setLoading(true);
-    setError(null);
-    try {
-      await authInstance.signOut();
-      // onAuthStateChanged will handle setting the currentUser to null
-    } catch (e) {
-      setError(e as Error);
-      throw e;
-    } finally {
-      setLoading(false);
-    }
+    await signOut(auth);
   };
-
-  // Placeholder for signUp if you decide to add it later
-  // const signUp = async (email, password) => {
-  //   if (!authInstance) {
-  //     throw new Error("Firebase Auth service is not available.");
-  //   }
-  //   setLoading(true);
-  //   setError(null);
-  //   try {
-  //     await authInstance.createUserWithEmailAndPassword(email, password);
-  //     // onAuthStateChanged will handle setting the currentUser
-  //   } catch (e) {
-  //     setError(e as Error);
-  //     throw e;
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
 
   const value = {
-    currentUser,
+    currentUser, // KORRIGERT: Sender riktig variabel
     loading,
-    error,
     login,
     logout,
-    // signUp, // Uncomment if you implement it
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+};
+
+// En enkel "hook" for å bruke konteksten i andre komponenter
+export const useAuth = () => {
+  return useContext(AuthContext);
 };
